@@ -1,3 +1,8 @@
+mod parser;
+use parser::parser;
+
 fn main() {
-    println!("Hello, world!");
+    let s = "აბასთუმანი (g. Kurort)";
+
+    println!("{:?}", parser(s).unwrap());
 }
