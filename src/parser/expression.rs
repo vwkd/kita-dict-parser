@@ -6,7 +6,7 @@ use nom::character::complete::digit1;
 use nom::combinator::{map, map_res};
 use nom::error::{FromExternalError, ParseError};
 use nom::multi::separated_list1;
-use nom::sequence::{separated_pair, pair};
+use nom::sequence::separated_pair;
 use nom::IResult;
 
 use super::character::ws_parser;
@@ -63,7 +63,14 @@ pub fn usage_item_parser<'i, E>(input: &'i str) -> IResult<&'i str, UsageItem, E
 where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
-    map(separated_pair(map_res(digit1, |s: &str| s.parse::<u8>()), tag(". "), usage_parser), |(index, usage)| UsageItem(usage, index))(input)
+    map(
+        separated_pair(
+            map_res(digit1, |s: &str| s.parse::<u8>()),
+            tag(". "),
+            usage_parser,
+        ),
+        |(index, usage)| UsageItem(usage, index),
+    )(input)
 }
 
 // todo: part of speech (pos)

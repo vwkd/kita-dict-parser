@@ -5,7 +5,7 @@ use super::tag::{tags_whitespace_parser, Tags};
 use super::term::{term_parser, Term};
 use super::Index;
 use nom::character::complete::digit1;
-use nom::combinator::{opt, map_res, map};
+use nom::combinator::{map, map_res, opt};
 use nom::error::FromExternalError;
 use nom::sequence::{delimited, separated_pair, tuple};
 use nom::{branch::alt, bytes::complete::tag, combinator::value, error::ParseError, IResult};
@@ -21,11 +21,14 @@ pub fn reference_parser<'i, E>(input: &'i str) -> IResult<&'i str, Reference, E>
 where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
-    map(separated_pair(
-        tuple((opt(tags_whitespace_parser), reference_kind_parser)),
-        ws_parser,
-        tuple((term_parser, opt(whitespace_usage_index_parser))),
-    ), |((tags, kind), (term, index))| Reference(term, index, kind, tags))(input)
+    map(
+        separated_pair(
+            tuple((opt(tags_whitespace_parser), reference_kind_parser)),
+            ws_parser,
+            tuple((term_parser, opt(whitespace_usage_index_parser))),
+        ),
+        |((tags, kind), (term, index))| Reference(term, index, kind, tags),
+    )(input)
 }
 
 /*
@@ -36,7 +39,11 @@ pub fn whitespace_usage_index_parser<'i, E>(input: &'i str) -> IResult<&'i str, 
 where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
-    delimited(tag(" (Pkt. "), map_res(digit1, |s: &str| s.parse::<u8>()), tag(")"))(input)
+    delimited(
+        tag(" (Pkt. "),
+        map_res(digit1, |s: &str| s.parse::<u8>()),
+        tag(")"),
+    )(input)
 }
 
 /*

@@ -1,4 +1,12 @@
-use nom::{error::ParseError, IResult, branch::alt, combinator::recognize, sequence::tuple, character::complete::{char, satisfy}, bytes::complete::take_while1};
+use nom::{
+    branch::alt,
+    bytes::complete::take_while1,
+    character::complete::{char, satisfy},
+    combinator::recognize,
+    error::ParseError,
+    sequence::tuple,
+    IResult,
+};
 
 /*
 WordDe
@@ -29,7 +37,10 @@ WordDeSmall
 pub fn word_de_small_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, &'i str, E> {
-    recognize(tuple((satisfy(is_char_de_small), take_while1(is_char_de_small))))(input)
+    recognize(tuple((
+        satisfy(is_char_de_small),
+        take_while1(is_char_de_small),
+    )))(input)
 }
 
 /*
@@ -40,7 +51,10 @@ WordDeBig
 pub fn word_de_big_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, &'i str, E> {
-    recognize(tuple((satisfy(is_char_de_big), take_while1(is_char_de_small))))(input)
+    recognize(tuple((
+        satisfy(is_char_de_big),
+        take_while1(is_char_de_small),
+    )))(input)
 }
 
 /*

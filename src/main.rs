@@ -1,8 +1,8 @@
-mod parser;
 mod import;
+mod parser;
 
-use parser::parser;
 use import::load_data;
+use parser::parser;
 
 const NEXT_PAGE: &str = "1/39";
 

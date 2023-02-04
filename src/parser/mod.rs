@@ -45,5 +45,8 @@ pub fn entry_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i s
 where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
-    map(separated_pair(term_parser, ws_parser, expression_parser), |(t, e)| Entry(t, e))(input)
+    map(
+        separated_pair(term_parser, ws_parser, expression_parser),
+        |(t, e)| Entry(t, e),
+    )(input)
 }

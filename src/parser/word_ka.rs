@@ -1,4 +1,7 @@
-use nom::{error::ParseError, IResult, branch::alt, sequence::tuple, character::complete::char, combinator::recognize, bytes::complete::take_while1};
+use nom::{
+    branch::alt, bytes::complete::take_while1, character::complete::char, combinator::recognize,
+    error::ParseError, sequence::tuple, IResult,
+};
 
 /*
 WordKa

@@ -2,7 +2,7 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
-    combinator::{value, map},
+    combinator::{map, value},
     error::ParseError,
     multi::separated_list1,
     sequence::{delimited, terminated},
@@ -29,7 +29,10 @@ Tags
 pub struct Tags(Vec<Tag>);
 
 pub fn tags_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, Tags, E> {
-    map(delimited(char('{'), separated_list1(tag(", "), tag_parser), char('}')), Tags)(input)
+    map(
+        delimited(char('{'), separated_list1(tag(", "), tag_parser), char('}')),
+        Tags,
+    )(input)
 }
 
 /*

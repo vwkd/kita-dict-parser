@@ -21,7 +21,10 @@ fn load_file(path: &str) -> io::Result<String> {
 
 fn preprocess(text: &str, next_page: &str) -> Result<String, regex::Error> {
     let re_next_page = Regex::new(&format!(r"\n\n## {}", next_page))?;
-    let s0 = re_next_page.split(text).next().expect(&format!("Page '{}' not found", next_page));
+    let s0 = re_next_page
+        .split(text)
+        .next()
+        .expect(&format!("Page '{}' not found", next_page));
 
     let re_header_lines = Regex::new(r"(?m)^##.*\n")?;
     let s1 = re_header_lines.replace_all(s0, "");
@@ -35,6 +38,6 @@ fn preprocess(text: &str, next_page: &str) -> Result<String, regex::Error> {
     // todo: keep verb lines and parse
     let re_verb_lines = Regex::new(r"(?m)^.*\n(^  .*\n)+")?;
     let s4 = re_verb_lines.replace_all(&s3, "");
-    
+
     Ok(s4.into_owned())
 }

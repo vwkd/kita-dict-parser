@@ -5,14 +5,6 @@ use nom::error::ParseError;
 use nom::IResult;
 
 /*
-nl
-    UNICODE_NEWLINE_CHARACTER
-*/
-pub fn nl_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, char, E> {
-    char('\n')(input)
-}
-
-/*
 ws
     UNICODE_WHITESPACE_CHARACTER
 */
@@ -33,7 +25,9 @@ SuperscriptNumber
     "⁸"
     "⁹"
 */
-pub fn superscript_number_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, u8, E> {
+pub fn superscript_number_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, u8, E> {
     alt((
         value(1, char('¹')),
         value(2, char('²')),
