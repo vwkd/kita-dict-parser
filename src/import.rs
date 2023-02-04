@@ -3,7 +3,6 @@ use std::fs;
 use std::io;
 
 const PATH: &str = "../kita-dict-data/src/dict.txt";
-const NEXT_PAGE: &str = "1/39";
 
 #[derive(Debug)]
 pub enum ImportError {
@@ -11,18 +10,18 @@ pub enum ImportError {
     Parse(regex::Error),
 }
 
-pub fn load_data() -> Result<String, ImportError> {
+pub fn load_data(next_page: &str) -> Result<String, ImportError> {
     let f = load_file(PATH).map_err(ImportError::Io)?;
-    preprocess(&f).map_err(ImportError::Parse)
+    preprocess(&f, next_page).map_err(ImportError::Parse)
 }
 
 fn load_file(path: &str) -> io::Result<String> {
     fs::read_to_string(path)
 }
 
-fn preprocess(text: &str) -> Result<String, regex::Error> {
-    let re_next_page = Regex::new(&format!(r"\n\n## {}", NEXT_PAGE))?;
-    let s0 = re_next_page.split(text).next().expect(&format!("Page '{}' not found", NEXT_PAGE));
+fn preprocess(text: &str, next_page: &str) -> Result<String, regex::Error> {
+    let re_next_page = Regex::new(&format!(r"\n\n## {}", next_page))?;
+    let s0 = re_next_page.split(text).next().expect(&format!("Page '{}' not found", next_page));
 
     let re_header_lines = Regex::new(r"(?m)^##.*\n")?;
     let s1 = re_header_lines.replace_all(s0, "");
