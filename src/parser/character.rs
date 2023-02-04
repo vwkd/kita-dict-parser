@@ -33,7 +33,7 @@ SuperscriptNumber
     "⁸"
     "⁹"
 */
-pub fn superscript_number_parser(input: &str) -> IResult<&str, u8> {
+pub fn superscript_number_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, u8, E> {
     alt((
         value(1, char('¹')),
         value(2, char('²')),

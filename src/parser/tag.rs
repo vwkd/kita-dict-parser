@@ -2,7 +2,7 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
-    combinator::value,
+    combinator::{value, map},
     error::ParseError,
     multi::separated_list1,
     sequence::{delimited, terminated},
@@ -25,10 +25,11 @@ pub fn tags_whitespace_parser<'i, E: ParseError<&'i str>>(
 Tags
     "{" Tag ("," ws Tag)* "}"
 */
+#[derive(Debug)]
 pub struct Tags(Vec<Tag>);
 
 pub fn tags_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, Tags, E> {
-    delimited(char('{'), separated_list1(tag(", "), tag_parser), char('}'))(input)
+    map(delimited(char('{'), separated_list1(tag(", "), tag_parser), char('}')), Tags)(input)
 }
 
 /*
@@ -36,6 +37,7 @@ Tag
     "biol."
     ...
 */
+#[derive(Debug, Clone)]
 pub enum Tag {
     BIOL,
     // ...

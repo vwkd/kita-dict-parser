@@ -1,11 +1,13 @@
+use std::num::ParseIntError;
+
 use nom::branch::alt;
-use nom::bytes::complete::{tag, take_while1};
-use nom::character::complete::{char, digit1};
+use nom::bytes::complete::tag;
+use nom::character::complete::digit1;
 use nom::combinator::{map, map_res};
-use nom::error::ParseError;
-use nom::multi::{many1, separated_list1};
-use nom::sequence::separated_pair;
-use nom::{IResult, Parser};
+use nom::error::{FromExternalError, ParseError};
+use nom::multi::separated_list1;
+use nom::sequence::{separated_pair, pair};
+use nom::IResult;
 
 use super::character::ws_parser;
 use super::field::{field_parser, Field};
@@ -17,43 +19,51 @@ Expression
     Usages
     Usage
 */
+#[derive(Debug)]
 pub enum Expression<'a> {
     Usage(Usage<'a>),
     Usages(Usages<'a>),
 }
 
-pub fn expression_parser<'i, E: ParseError<&'i str>>(
+pub fn expression_parser<'i, E>(
     input: &'i str,
-) -> IResult<&'i str, Expression, E> {
-    alt((usage_parser, usages_parser))(input)
+) -> IResult<&'i str, Expression, E>
+where
+    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
+{
+    alt((
+        map(usage_parser, Expression::Usage),
+        map(usages_parser, Expression::Usages),
+    ))(input)
 }
 
 /*
 Usages
     UsageItem(1) ws UsageItem(2) (ws UsageItem(i))_i=3*
 */
+#[derive(Debug)]
 pub struct Usages<'a>(Vec<UsageItem<'a>>);
 
-pub fn usages_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, Usages, E> {
+pub fn usages_parser<'i, E>(input: &'i str) -> IResult<&'i str, Usages, E>
+where
+    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
+{
     // todo: create and use separated_list2
-    separated_list1(ws_parser, usage_item_parser)(input)
+    map(separated_list1(ws_parser, usage_item_parser), Usages)(input)
 }
 
 /*
 UsageItem(i)
     i "." ws Usage
 */
+#[derive(Debug)]
 pub struct UsageItem<'a>(Usage<'a>, Index);
 
-pub fn usage_item_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, UsageItem, E> {
-    let (input, (i, u)) = separated_pair(
-        map_res(digit1, |s: &str| s.parse::<u8>()),
-        ws_parser,
-        usage_parser,
-    )(input)?;
-    Ok((input, (u, i)))
+pub fn usage_item_parser<'i, E>(input: &'i str) -> IResult<&'i str, UsageItem, E>
+where
+    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
+{
+    map(separated_pair(map_res(digit1, |s: &str| s.parse::<u8>()), tag(". "), usage_parser), |(index, usage)| UsageItem(usage, index))(input)
 }
 
 // todo: part of speech (pos)
@@ -61,27 +71,35 @@ pub fn usage_item_parser<'i, E: ParseError<&'i str>>(
 Usage
     Definition (";" ws Definition)*
 */
-pub struct Usage<'a>(Vec<DefinitionItem<'a>>);
+// todo: make DefinitionItem indirection, how to get index without state?
+//pub struct DefinitionItem<'a>(Definition<'a>, Index);
+#[derive(Debug)]
+pub struct Usage<'a>(Vec<Definition<'a>>);
 
-pub fn usage_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, Usage, E> {
-    separated_list1(tag("; "), definition_parser)(input)
+pub fn usage_parser<'i, E>(input: &'i str) -> IResult<&'i str, Usage, E>
+where
+    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
+{
+    map(separated_list1(tag("; "), definition_parser), Usage)(input)
 }
-
-// todo: how to get definition item without state???
-pub struct DefinitionItem<'a>(Definition<'a>, Index);
 
 /*
 Definition
     Reference
     Field
 */
+#[derive(Debug)]
 pub enum Definition<'a> {
     Reference(Reference<'a>),
     Field(Field<'a>),
 }
 
-pub fn definition_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, Definition, E> {
-    alt((reference_parser, field_parser))
+pub fn definition_parser<'i, E>(input: &'i str) -> IResult<&'i str, Definition, E>
+where
+    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
+{
+    alt((
+        map(reference_parser, Definition::Reference),
+        map(field_parser, Definition::Field),
+    ))(input)
 }
