@@ -10,23 +10,61 @@ use nom::{
 
 /*
 WordDe
-    WordDeBig
-    WordDeSmall
+    WordDePlain
+    WordDeExclamation
+    WordDeQuestion
     WordDeHyphen
 */
 pub fn word_de_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, &'i str, E> {
-    alt((word_de_big_parser, word_de_small_parser, word_de_hyphen_parser))(input)
+    alt((
+        word_de_plain_parser,
+        word_de_exclamation_parser,
+        word_de_question_parser,
+        word_de_hyphen_parser,
+    ))(input)
+}
+
+/*
+WordDeExclamation
+    WordDePlain "!"
+*/
+pub fn word_de_exclamation_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, &'i str, E> {
+    recognize(tuple((word_de_plain_parser, char('!'))))(input)
+}
+
+/*
+WordDeQuestion
+    WordDePlain "!"
+*/
+pub fn word_de_question_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, &'i str, E> {
+    recognize(tuple((word_de_plain_parser, char('?'))))(input)
 }
 
 // todo: allow WordDeSmall?
 /*
 WordDeHyphen
     WordDeBig "-" WordDeBig
+    WordDeSmall "-"
 */
 pub fn word_de_hyphen_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, &'i str, E> {
     recognize(tuple((word_de_big_parser, char('-'), word_de_big_parser)))(input)
+}
+
+/*
+WordDePlain
+    WordDeBig
+    WordDeSmall
+*/
+pub fn word_de_plain_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, &'i str, E> {
+    alt((word_de_big_parser, word_de_small_parser))(input)
 }
 
 /*

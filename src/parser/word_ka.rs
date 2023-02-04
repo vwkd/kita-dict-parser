@@ -1,7 +1,66 @@
 use nom::{
-    branch::alt, bytes::complete::take_while1, character::complete::char, combinator::recognize,
-    error::ParseError, sequence::tuple, IResult,
+    branch::alt,
+    bytes::complete::{tag, take_while1},
+    character::complete::char,
+    combinator::{consumed, map, recognize},
+    error::ParseError,
+    sequence::{delimited, tuple},
+    IResult,
 };
+
+use super::Value;
+
+// todo: bare `RootKa` only for verbs, currently filtered out
+/*
+HeadwordKa
+    WordRootKa
+    WordKa
+*/
+pub fn headword_ka_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, WordRootKa<'i>, E> {
+    alt((
+        word_root_ka_parser,
+        map(word_ka_parser, |value| WordRootKa(value.to_owned(), None)),
+    ))(input)
+}
+
+/*
+WordRootKa
+    RootKa WordKaSmall
+    WordKaSmall RootKa WordKaSmall
+    WordKaSmall RootKa
+*/
+// note: needs owned string because can't concatenate string slices for word parts, e.g. "ა", "ბუშტ", "ული" of "ა**ბუშტ**ული"
+#[derive(Debug)]
+pub struct WordRootKa<'a>(String, Option<Value<'a>>);
+
+pub fn word_root_ka_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, WordRootKa<'i>, E> {
+    alt((
+        map(
+            tuple((root_ka_parser, word_ka_small_parser)),
+            |(root, end)| WordRootKa(format!("{}{}", root, end), Some(root)),
+        ),
+        map(
+            tuple((word_ka_small_parser, root_ka_parser, word_ka_small_parser)),
+            |(start, root, end)| WordRootKa(format!("{}{}{}", start, root, end), Some(root)),
+        ),
+        map(
+            tuple((word_ka_small_parser, root_ka_parser)),
+            |(start, root)| WordRootKa(format!("{}{}", start, root), Some(root)),
+        ),
+    ))(input)
+}
+
+/*
+RootKa
+    "**" WordKa "**"
+*/
+pub fn root_ka_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, &'i str, E> {
+    delimited(tag("**"), word_ka_parser, tag("**"))(input)
+}
 
 /*
 WordKa
@@ -15,13 +74,23 @@ pub fn word_ka_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i
 /*
 // note: allow only single hyphen in word
 WordKaHyphen
+    "-" WordKaSmall
     WordKaSmall "-" WordKaSmall
+    WordKaSmall "-"
     // WordKaSmall "-" WordDeBig
 */
 pub fn word_ka_hyphen_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, &'i str, E> {
-    recognize(tuple((word_ka_small_parser, char('-'), word_ka_small_parser)))(input)
+    alt((
+        recognize(tuple((char('-'), word_ka_small_parser))),
+        recognize(tuple((
+            word_ka_small_parser,
+            char('-'),
+            word_ka_small_parser,
+        ))),
+        recognize(tuple((word_ka_small_parser, char('-')))),
+    ))(input)
 }
 
 /*
