@@ -8,15 +8,22 @@ const NEXT_PAGE: &str = "1/39";
 
 fn main() {
     let s = load_data(NEXT_PAGE).expect("Error loading data");
-    
-    for line in s.lines() {
-        println!("{}", line);
 
-        match parser::<nom::error::Error<&str>>(line) {
-            Ok((_, entry)) => println!("{:?}", entry),
-            Err(e) => eprintln!("{}", e),
+    // todo: handle skipped lines
+    let lines = s.lines().enumerate().filter(|(i, l)| !l.contains("|"));
+
+    for (index, line) in lines {
+        let entry = parser::<nom::error::Error<&str>>(line);
+
+        match entry {
+            Err(e) => {
+                eprintln!("{index}: {line}");
+                eprintln!("{:?}\n", e);
+            }
+            Ok((_, entry)) => {
+                println!("{index}: {line}");
+                println!("{:?}\n", entry);
+            }
         }
-
-        println!("");
     }
 }
