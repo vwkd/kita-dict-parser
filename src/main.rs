@@ -1,8 +1,13 @@
 mod parser;
 use parser::parser;
 
-fn main() {
-    let s = "აბასთუმანი (g. Kurort)";
+mod import;
+use import::load_data;
 
-    println!("{:?}", parser(s).unwrap());
+fn main() {
+    let s = load_data().unwrap();
+
+    for line in s.lines() {
+        println!("{:?}", parser(line).unwrap());
+    }
 }
