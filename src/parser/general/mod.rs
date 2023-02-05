@@ -12,13 +12,13 @@ use std::num::ParseIntError;
 
 use character::ws_parser;
 use expression::{expression_parser, Expression};
-use term::{term_parser, Term};
 use nom::{
     combinator::{eof, map},
     error::{FromExternalError, ParseError},
     sequence::{separated_pair, terminated},
     IResult,
 };
+use term::{term_parser, Term};
 
 pub type Value<'a> = &'a str;
 pub type Index = u8;

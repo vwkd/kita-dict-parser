@@ -4,7 +4,7 @@ use nom::combinator::{map, opt};
 use nom::sequence::tuple;
 use nom::{error::ParseError, IResult};
 
-use super::super::Index;
+use super::Index;
 
 /*
 Term

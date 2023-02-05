@@ -8,7 +8,7 @@ use nom::{
     IResult,
 };
 
-use super::super::Value;
+use super::Value;
 
 // todo: bare `RootKa` only for verbs, currently filtered out
 /*

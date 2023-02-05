@@ -1,9 +1,9 @@
 use std::num::ParseIntError;
 
-use super::super::Index;
 use super::character::ws_parser;
 use super::tag::{tags_whitespace_parser, Tags};
 use super::term::{term_parser, Term};
+use super::Index;
 use nom::character::complete::digit1;
 use nom::combinator::{map, map_res, opt};
 use nom::error::FromExternalError;
