@@ -1,4 +1,4 @@
-use itertools::Itertools;
+use itertools::{Itertools, Position};
 use regex::Regex;
 use std::fs;
 use std::io;
@@ -42,19 +42,20 @@ fn preprocess(text: &str, next_page: &str) -> Result<DictData, regex::Error> {
     let text = re_continued_lines.replace_all(&text2, "");
 
     let re_verb_lines = Regex::new(r"(?m)^.*\n(^  .*\n)+")?;
+
     // let text_noverbs = re_verb_lines.replace_all(&text, "").to_string();
     let text_noverbs = re_verb_lines.split(&text).join("");
     let lines_noverbs: Vec<String> = text_noverbs.lines().map(|l| l.to_owned()).collect();
-    let mut lines_verbs: Vec<String> = re_verb_lines
-        .find_iter(&text)
-        .map(|m| m.as_str().to_owned())
-        .collect();
+
     // trim empty last line of last entry
-    if let Some(l) = lines_verbs.last_mut() {
-        if l.ends_with("\n") {
-            *l = l.trim_end().to_owned();
-        }
-    }
+    let lines_verbs: Vec<String> = re_verb_lines
+        .find_iter(&text)
+        .with_position()
+        .map(|m| match m {
+            Position::First(m) | Position::Middle(m) => m.as_str().to_owned(),
+            Position::Last(m) | Position::Only(m) => m.as_str().trim_end().to_owned(),
+        })
+        .collect();
 
     Ok(DictData(lines_noverbs, lines_verbs))
 }
