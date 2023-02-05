@@ -2,13 +2,13 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
     character::complete::char,
-    combinator::{consumed, map, recognize},
+    combinator::{map, recognize},
     error::ParseError,
     sequence::{delimited, tuple},
     IResult,
 };
 
-use super::Value;
+use super::super::Value;
 
 // todo: bare `RootKa` only for verbs, currently filtered out
 /*

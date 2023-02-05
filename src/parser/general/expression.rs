@@ -9,10 +9,10 @@ use nom::multi::separated_list1;
 use nom::sequence::separated_pair;
 use nom::IResult;
 
+use super::super::Index;
 use super::character::ws_parser;
 use super::field::{field_parser, Field};
 use super::reference::{reference_parser, Reference};
-use super::Index;
 
 /*
 Expression

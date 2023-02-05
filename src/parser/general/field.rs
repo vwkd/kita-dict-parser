@@ -11,7 +11,7 @@ use nom::{
 use super::tag::{tags_whitespace_parser, Tags};
 use super::word::words_parser;
 
-use super::Value;
+use super::super::Value;
 
 // TODO: Rename this module
 
