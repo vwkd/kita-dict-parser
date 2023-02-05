@@ -10,7 +10,6 @@ use nom::{
 
 use super::Value;
 
-// todo: bare `RootKa` only for verbs, currently filtered out
 /*
 HeadwordKa
     WordRootKa
