@@ -15,12 +15,18 @@ HeadwordKa
     WordRootKa
     WordKa
 */
+#[derive(Debug)]
+pub enum HeadwordKa<'a> {
+    Plain(&'a str),
+    WithRoot(WordRootKa<'a>),
+}
+
 pub fn headword_ka_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
-) -> IResult<&'i str, WordRootKa<'i>, E> {
+) -> IResult<&'i str, HeadwordKa<'i>, E> {
     alt((
-        word_root_ka_parser,
-        map(word_ka_parser, |value| WordRootKa(value.to_owned(), None)),
+        map(word_root_ka_parser, HeadwordKa::WithRoot),
+        map(word_ka_parser, HeadwordKa::Plain),
     ))(input)
 }
 
@@ -30,9 +36,9 @@ WordRootKa
     WordKaSmall RootKa WordKaSmall
     WordKaSmall RootKa
 */
-// note: needs owned string because can't concatenate string slices for word parts, e.g. "ა", "ბუშტ", "ული" of "ა**ბუშტ**ული"
 #[derive(Debug)]
-pub struct WordRootKa<'a>(String, Option<Value<'a>>);
+/// srtart, root, end
+pub struct WordRootKa<'a>(Option<Value<'a>>, Value<'a>, Option<Value<'a>>);
 
 pub fn word_root_ka_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
@@ -40,15 +46,15 @@ pub fn word_root_ka_parser<'i, E: ParseError<&'i str>>(
     alt((
         map(
             tuple((root_ka_parser, word_ka_small_parser)),
-            |(root, end)| WordRootKa(format!("{}{}", root, end), Some(root)),
+            |(root, end)| WordRootKa(None, root, Some(end)),
         ),
         map(
             tuple((word_ka_small_parser, root_ka_parser, word_ka_small_parser)),
-            |(start, root, end)| WordRootKa(format!("{}{}{}", start, root, end), Some(root)),
+            |(start, root, end)| WordRootKa(Some(start), root, Some(end)),
         ),
         map(
             tuple((word_ka_small_parser, root_ka_parser)),
-            |(start, root)| WordRootKa(format!("{}{}", start, root), Some(root)),
+            |(start, root)| WordRootKa(Some(start), root, None),
         ),
     ))(input)
 }
