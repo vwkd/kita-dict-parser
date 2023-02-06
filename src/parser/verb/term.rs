@@ -5,21 +5,42 @@ use nom::{
     IResult,
 };
 
-use super::super::general::Index;
-use super::super::general::{
-    character::superscript_number_parser, word_ka::headword_ka_parser, word_ka::WordRootKa,
-};
+use crate::parser::general::word_ka::root_ka_parser;
+
+use super::super::general::character::superscript_number_parser;
+use super::{super::general::Index, character::infinitive_suffix_parser};
+
+/*
+VerbTermInfinitive
+  RootKa InfinitiveSuffix SuperscriptNumber?
+*/
+#[derive(Debug)]
+/// root, infinitive suffix, index
+pub struct VerbTermInfinitive<'a>(&'a str, &'a str, Option<Index>);
+
+pub fn term_infinitive_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, VerbTermInfinitive, E> {
+    map(
+        tuple((
+            root_ka_parser,
+            infinitive_suffix_parser,
+            opt(superscript_number_parser),
+        )),
+        |(value, suffix, index)| VerbTermInfinitive(value, suffix, index),
+    )(input)
+}
 
 /*
 VerbTerm
-  HeadwordKa SuperscriptNumber?
+    RootKa SuperscriptNumber?
 */
 #[derive(Debug)]
-pub struct VerbTerm<'a>(WordRootKa<'a>, Option<Index>);
+pub struct VerbTerm<'a>(&'a str, Option<Index>);
 
 pub fn term_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, VerbTerm, E> {
     map(
-        tuple((headword_ka_parser, opt(superscript_number_parser))),
+        tuple((root_ka_parser, opt(superscript_number_parser))),
         |(value, index)| VerbTerm(value, index),
     )(input)
 }

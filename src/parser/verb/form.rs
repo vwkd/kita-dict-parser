@@ -9,15 +9,15 @@ use super::{
 };
 
 /*
-VerbForm
+VerbSingleForm
   VerbCategory ws VerbConjugation ws VerbExpression
 */
 #[derive(Debug)]
-pub struct VerbForm<'a>(VerbCategory, VerbConjugation<'a>, VerbExpression<'a>);
+pub struct VerbSingleForm<'a>(VerbCategory, VerbConjugation<'a>, VerbExpression<'a>);
 
 pub fn form_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
-) -> IResult<&'i str, VerbForm<'i>, E> {
+) -> IResult<&'i str, VerbSingleForm<'i>, E> {
     map(
         tuple((
             category_parser,
@@ -27,7 +27,7 @@ pub fn form_parser<'i, E: ParseError<&'i str>>(
             expression_parser,
         )),
         |(category, _, conjugation, _, expression)| {
-            VerbForm(category, conjugation, expression)
+            VerbSingleForm(category, conjugation, expression)
         },
     )(input)
 }

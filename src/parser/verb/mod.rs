@@ -6,33 +6,75 @@ mod form;
 mod term;
 
 use nom::{
+    branch::alt,
     combinator::{eof, map},
     error::ParseError,
+    multi::many1,
     sequence::{separated_pair, terminated},
     IResult,
 };
 
-use form::{form_parser, VerbForm};
-use term::{term_parser, VerbTerm};
 use character::nltb_parser;
+use form::{form_parser, VerbSingleForm};
+use term::{term_infinitive_parser, term_parser, VerbTerm, VerbTermInfinitive};
 
 /*
 Parser
-  VerbEntry EOF
+  VerbSingleEntry EOF
+  VerbMultiEntry EOF
 */
+#[derive(Debug)]
+pub enum VerbEntry<'a> {
+    Single(VerbSingleEntry<'a>),
+    Multi(VerbMultiEntry<'a>),
+}
+
 pub fn parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, VerbEntry, E> {
-    terminated(entry_parser, eof)(input)
+    alt((
+        terminated(map(single_entry_parser, VerbEntry::Single), eof),
+        terminated(map(multi_entry_parser, VerbEntry::Multi), eof),
+    ))(input)
 }
 
 /*
-VerbEntry
-  VerbTerm nltb VerbForm
+VerbSingleEntry
+  VerbTermInfinitive nltb VerbSingleForm
 */
 #[derive(Debug)]
-pub struct VerbEntry<'a>(VerbTerm<'a>, VerbForm<'a>);
+pub struct VerbSingleEntry<'a>(VerbTermInfinitive<'a>, VerbSingleForm<'a>);
 
-pub fn entry_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, VerbEntry, E> {
-    map(separated_pair(term_parser, nltb_parser, form_parser), |(term, form)| {
-        VerbEntry(term, form)
-    })(input)
+pub fn single_entry_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, VerbSingleEntry, E> {
+    map(
+        separated_pair(term_infinitive_parser, nltb_parser, form_parser),
+        |(term, form)| VerbSingleEntry(term, form),
+    )(input)
+}
+
+/*
+VerbMultiEntry
+  VerbTerm nltb VerbForm+
+*/
+#[derive(Debug)]
+pub struct VerbMultiEntry<'a>(VerbTerm<'a>, Vec<VerbForm<'a>>);
+
+pub fn multi_entry_parser<'i, E: ParseError<&'i str>>(
+    input: &'i str,
+) -> IResult<&'i str, VerbMultiEntry, E> {
+    map(
+        separated_pair(term_parser, nltb_parser, many1(entry_parser)),
+        |(term, forms)| VerbMultiEntry(term, forms),
+    )(input)
+}
+
+/*
+VerbForm
+  // ...
+*/
+#[derive(Debug)]
+pub struct VerbForm<'a>(&'a str); // todo:
+
+pub fn entry_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, VerbForm, E> {
+    todo!()
 }
