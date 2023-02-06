@@ -107,15 +107,120 @@ pub fn word_de_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i
     ))(input)
 }
 
+// todo: add missing, e.g. `z.B.`
 /*
 ShorthandDe
-  "z.B."
+  "b."
+  "e."
+  "ea."
+  "e-e"
+  "e-m"
+  "e-n"
+  "e-r"
+  "e-s"
+  "et."
+  "fr."
+  "g."
+  "j-d"
+  "j-m"
+  "j-n"
+  "j-s"
+  "l."
+  "m."
+  "m-e"
+  "m-m"
+  "m-n"
+  "m-r"
+  "m-s"
+  "ng."
+  "og."
+  "u."
+  "u. zw."
+  "v."
+  "wg."
+  "zs."
+
+  // "a."
+  // "Abk."
+  // "ag."
+  // "Bed."
+  // "do."
+  // "d.O."
+  // "DOZ"
+  // "ehm."
+  // "Fn."
+  // "FR"
+  // "gebr."
+  // "Ggs."
+  // "imS"
+  // "intr."
+  // "i.O."
+  // "IOZ"
+  // "Iter."
+  // "L."
+  // "mst"
+  // "m. Vn."
+  // "neg."
+  // "NG"
+  // "NV"
+  // "Obj."
+  // "od."
+  // "OG"
+  // "OR"
+  // "OV"
+  // "OVZ"
+  // "P."
+  // "Pkt."
+  // "PR"
+  // "s."
+  // "sg."
+  // "SG"
+  // "sn"
+  // "Subj."
+  // "SupV"
+  // "SupVZ"
+  // "SV"
+  // "T."
+  // "Vn."
+  // "WG"
+  // "w. Vn."
 */
 pub fn shorthand_de_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, &'i str, E> {
     alt((
-        tag("z.B."),
-        //
+        alt((
+            tag("b."),
+            tag("e."),
+            tag("ea."),
+            tag("e-e"),
+            tag("e-m"),
+            tag("e-n"),
+            tag("e-r"),
+            tag("e-s"),
+            tag("et."),
+            tag("fr."),
+            tag("g."),
+            tag("j-d"),
+            tag("j-m"),
+            tag("j-n"),
+            tag("j-s"),
+            tag("l."),
+            tag("m."),
+            tag("m-e"),
+            tag("m-m"),
+        )),
+        alt((
+            tag("m-n"),
+            tag("m-r"),
+            tag("m-s"),
+            tag("ng."),
+            tag("og."),
+            tag("u."),
+            tag("u. zw."),
+            tag("v."),
+            tag("wg."),
+            tag("zs."),
+        )),
     ))(input)
 }
