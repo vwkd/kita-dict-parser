@@ -70,7 +70,7 @@ pub fn form_class1_parser<'i, E: ParseError<&'i str>>(
         ),
         separated_pair(
             map(word_ka_small_parser, PresentS1::Full),
-            tag(", "),
+            terminated(char(','), ws_parser),
             map(terminated(preverb_parser, char('~')), FutureS1::Preverb),
         ),
     ))(input)
@@ -87,7 +87,7 @@ pub fn form_class23_parser<'i, E: ParseError<&'i str>>(
         char('('),
         separated_pair(
             map(word_ka_small_parser, AoristS1::Full),
-            tag(", "),
+            terminated(char(','), ws_parser),
             map(word_ka_small_parser, PerfectiveS1::Full),
         ),
         char(')'),

@@ -1,11 +1,11 @@
 use std::num::ParseIntError;
 
 use nom::branch::alt;
-use nom::bytes::complete::tag;
+use nom::character::complete::char;
 use nom::combinator::map;
 use nom::error::{FromExternalError, ParseError};
 use nom::multi::separated_list1;
-use nom::sequence::separated_pair;
+use nom::sequence::{separated_pair, terminated};
 use nom::IResult;
 
 use super::character::{integer_parser, ws_parser};
@@ -31,8 +31,8 @@ where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
     alt((
-        map(usage_parser, Expression::Usage),
         map(usages_parser, Expression::Usages),
+        map(usage_parser, Expression::Usage),
     ))(input)
 }
 
@@ -40,6 +40,7 @@ where
 Usages
     UsageItem(1) ws UsageItem(2) (ws UsageItem(i))_i=3*
 */
+// todo: implement increasing integers, probably needs custom parser
 #[derive(Debug)]
 pub struct Usages<'a>(Vec<UsageItem<'a>>);
 
@@ -63,7 +64,11 @@ where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
     map(
-        separated_pair(integer_parser, tag(". "), usage_parser),
+        separated_pair(
+            integer_parser,
+            terminated(char('.'), ws_parser),
+            usage_parser,
+        ),
         |(index, usage)| UsageItem(usage, index),
     )(input)
 }
@@ -82,7 +87,10 @@ pub fn usage_parser<'i, E>(input: &'i str) -> IResult<&'i str, Usage, E>
 where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
-    map(separated_list1(tag("; "), definition_parser), Usage)(input)
+    map(
+        separated_list1(terminated(char(';'), ws_parser), definition_parser),
+        Usage,
+    )(input)
 }
 
 /*

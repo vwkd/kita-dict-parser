@@ -1,11 +1,21 @@
-use nom::{branch::alt, bytes::complete::tag, error::ParseError, IResult};
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    character::complete::char,
+    combinator::recognize,
+    error::ParseError,
+    sequence::{pair, terminated},
+    IResult,
+};
+
+use crate::parser::general::character::ws_parser;
 
 /*
 nlwsws
   "\n  "
 */
 pub fn nlwsws_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, &'i str, E> {
-    tag("\n  ")(input)
+    recognize(terminated(char('\n'), pair(ws_parser, ws_parser)))(input)
 }
 
 /*

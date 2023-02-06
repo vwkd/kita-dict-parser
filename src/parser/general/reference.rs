@@ -6,8 +6,11 @@ use super::term::{term_parser, Term};
 use super::Index;
 use nom::combinator::{map, opt};
 use nom::error::FromExternalError;
-use nom::sequence::{delimited, separated_pair, tuple};
-use nom::{branch::alt, bytes::complete::tag, combinator::value, error::ParseError, IResult};
+use nom::sequence::{delimited, separated_pair, terminated, tuple};
+use nom::{
+    branch::alt, bytes::complete::tag, character::complete::char, combinator::value,
+    error::ParseError, sequence::preceded, IResult,
+};
 
 /*
 Reference
@@ -32,13 +35,20 @@ where
 
 /*
 WhitespaceUsageIndex
-    ws "(Pkt." ws Integer ")"
+    ws "(" "Pkt." ws Integer ")"
 */
 pub fn whitespace_usage_index_parser<'i, E>(input: &'i str) -> IResult<&'i str, u8, E>
 where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
-    delimited(tag(" (Pkt. "), integer_parser, tag(")"))(input)
+    preceded(
+        ws_parser,
+        delimited(
+            char('('),
+            preceded(terminated(tag("Pkt."), ws_parser), integer_parser),
+            char(')'),
+        ),
+    )(input)
 }
 
 /*
@@ -56,7 +66,10 @@ pub fn reference_kind_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, ReferenceKind, E> {
     alt((
-        value(ReferenceKind::SeeMeaning, tag("Bed. s.")),
+        value(
+            ReferenceKind::SeeMeaning,
+            separated_pair(tag("Bed."), ws_parser, tag("s.")),
+        ),
         value(ReferenceKind::See, tag("s.")),
     ))(input)
 }

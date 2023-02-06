@@ -11,7 +11,7 @@ use nom::{
     combinator::recognize,
     error::{FromExternalError, ParseError},
     multi::separated_list1,
-    sequence::{delimited, pair, tuple},
+    sequence::{delimited, pair, separated_pair, terminated, tuple},
     IResult,
 };
 
@@ -66,7 +66,7 @@ pub fn separator_de_parser<'i, E: ParseError<&'i str>>(
 ) -> IResult<&'i str, &'i str, E> {
     alt((
         recognize(ws_parser),
-        recognize(tag(", ")),
+        recognize(terminated(char(','), ws_parser)),
         recognize(char('/')),
     ))(input)
 }
@@ -225,7 +225,7 @@ pub fn shorthand_de_parser<'i, E: ParseError<&'i str>>(
             tag("ng."),
             tag("og."),
             tag("u."),
-            tag("u. zw."),
+            recognize(separated_pair(tag("u."), ws_parser, tag("zw."))),
             tag("v."),
             tag("wg."),
             tag("zs."),

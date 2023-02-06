@@ -30,7 +30,11 @@ pub struct Tags(Vec<Tag>);
 
 pub fn tags_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, Tags, E> {
     map(
-        delimited(char('{'), separated_list1(tag(", "), tag_parser), char('}')),
+        delimited(
+            char('{'),
+            separated_list1(terminated(char(','), ws_parser), tag_parser),
+            char('}'),
+        ),
         Tags,
     )(input)
 }
