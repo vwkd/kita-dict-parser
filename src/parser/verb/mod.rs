@@ -5,17 +5,11 @@ mod expression;
 mod form;
 mod term;
 
-use nom::{
-    branch::alt,
-    combinator::{eof, map},
-    multi::many1,
-    sequence::{separated_pair, terminated},
-    IResult,
-};
+use nom::{branch::alt, combinator::map, multi::many1, sequence::separated_pair, IResult};
 
 use character::nlwsws_parser;
 use form::{form_parser, VerbSingleForm};
-use nom_supreme::error::ErrorTree;
+use nom_supreme::{error::ErrorTree, final_parser::final_parser};
 use term::{term_infinitive_parser, term_parser, VerbTerm, VerbTermInfinitive};
 
 /*
@@ -29,11 +23,11 @@ pub enum VerbEntry<'a> {
     Multi(VerbMultiEntry<'a>),
 }
 
-pub fn parser(input: &str) -> IResult<&str, VerbEntry, ErrorTree<&str>> {
-    alt((
-        terminated(map(single_entry_parser, VerbEntry::Single), eof),
-        terminated(map(multi_entry_parser, VerbEntry::Multi), eof),
-    ))(input)
+pub fn parse(input: &str) -> Result<VerbEntry, ErrorTree<&str>> {
+    final_parser(alt((
+        map(single_entry_parser, VerbEntry::Single),
+        map(multi_entry_parser, VerbEntry::Multi),
+    )))(input)
 }
 
 /*

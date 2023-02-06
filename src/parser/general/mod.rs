@@ -9,12 +9,8 @@ pub mod word_ka;
 
 use character::ws_parser;
 use expression::{expression_parser, Expression};
-use nom::{
-    combinator::{eof, map},
-    sequence::{separated_pair, terminated},
-    IResult,
-};
-use nom_supreme::error::ErrorTree;
+use nom::{combinator::map, sequence::separated_pair, IResult};
+use nom_supreme::{error::ErrorTree, final_parser::final_parser};
 use term::{term_parser, Term};
 
 pub type Value<'a> = &'a str;
@@ -24,8 +20,8 @@ pub type Index = u8;
 Parser
   Entry EOF
 */
-pub fn parser(input: &str) -> IResult<&str, Entry, ErrorTree<&str>> {
-    terminated(entry_parser, eof)(input)
+pub fn parse(input: &str) -> Result<Entry, ErrorTree<&str>> {
+    final_parser(entry_parser)(input)
 }
 
 /*

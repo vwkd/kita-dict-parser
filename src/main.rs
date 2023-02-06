@@ -11,14 +11,14 @@ fn main() {
     let DictData(lines_noverbs, lines_verbs) = load_data(NEXT_PAGE).expect("Error loading data");
 
     for (index, line) in lines_noverbs.into_iter().enumerate() {
-        let entry = general::parser(&line);
+        let entry = general::parse(&line);
 
         match entry {
             Err(e) => {
                 eprintln!("{index}: {line}");
                 eprintln!("{:?}\n", e);
             }
-            Ok((_, entry)) => {
+            Ok(entry) => {
                 println!("{index}: {line}");
                 println!("{:?}\n", entry);
             }
@@ -26,14 +26,14 @@ fn main() {
     }
 
     for (index, line) in lines_verbs.into_iter().enumerate() {
-        let entry = verb::parser(&line);
+        let entry = verb::parse(&line);
 
         match entry {
             Err(e) => {
                 eprintln!("{index}: {line}");
                 eprintln!("{:?}\n", e);
             }
-            Ok((_, entry)) => {
+            Ok(entry) => {
                 println!("{index}: {line}");
                 println!("{:?}\n", entry);
             }
