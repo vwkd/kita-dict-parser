@@ -1,10 +1,10 @@
 use nom::{branch::alt, bytes::complete::tag, error::ParseError, IResult};
 
 /*
-nltb
+nlwsws
   "\n  "
 */
-pub fn nltb_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, &'i str, E> {
+pub fn nlwsws_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, &'i str, E> {
     tag("\n  ")(input)
 }
 

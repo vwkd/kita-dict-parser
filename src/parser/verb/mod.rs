@@ -14,7 +14,7 @@ use nom::{
     IResult,
 };
 
-use character::nltb_parser;
+use character::nlwsws_parser;
 use form::{form_parser, VerbSingleForm};
 use term::{term_infinitive_parser, term_parser, VerbTerm, VerbTermInfinitive};
 
@@ -38,7 +38,7 @@ pub fn parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, Ve
 
 /*
 VerbSingleEntry
-  VerbTermInfinitive nltb VerbSingleForm
+  VerbTermInfinitive nlwsws VerbSingleForm
 */
 #[derive(Debug)]
 pub struct VerbSingleEntry<'a>(VerbTermInfinitive<'a>, VerbSingleForm<'a>);
@@ -47,14 +47,14 @@ pub fn single_entry_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, VerbSingleEntry, E> {
     map(
-        separated_pair(term_infinitive_parser, nltb_parser, form_parser),
+        separated_pair(term_infinitive_parser, nlwsws_parser, form_parser),
         |(term, form)| VerbSingleEntry(term, form),
     )(input)
 }
 
 /*
 VerbMultiEntry
-  VerbTerm nltb VerbForm+
+  VerbTerm nlwsws VerbForm+
 */
 #[derive(Debug)]
 pub struct VerbMultiEntry<'a>(VerbTerm<'a>, Vec<VerbForm<'a>>);
@@ -63,7 +63,7 @@ pub fn multi_entry_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, VerbMultiEntry, E> {
     map(
-        separated_pair(term_parser, nltb_parser, many1(entry_parser)),
+        separated_pair(term_parser, nlwsws_parser, many1(entry_parser)),
         |(term, forms)| VerbMultiEntry(term, forms),
     )(input)
 }
