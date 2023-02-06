@@ -1,6 +1,6 @@
 use nom::{combinator::map, error::ParseError, IResult};
 
-use crate::parser::general::word::words_parser;
+use crate::parser::general::word::sentence_de_parser;
 
 /*
 VerbExpression
@@ -13,6 +13,5 @@ pub struct VerbExpression<'a>(&'a str);
 pub fn expression_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, VerbExpression<'i>, E> {
-    // todo: use words_de_parser
-    map(words_parser, VerbExpression)(input)
+    map(sentence_de_parser, VerbExpression)(input)
 }

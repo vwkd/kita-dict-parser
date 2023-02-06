@@ -10,8 +10,8 @@ use nom::sequence::separated_pair;
 use nom::IResult;
 
 use super::character::ws_parser;
-use super::field::{field_parser, Field};
 use super::reference::{reference_parser, Reference};
+use super::word::sentence_de_parser;
 use super::Index;
 
 /*
@@ -93,12 +93,12 @@ where
 /*
 Definition
     Reference
-    Field
+    SentenceDe
 */
 #[derive(Debug)]
 pub enum Definition<'a> {
     Reference(Reference<'a>),
-    Field(Field<'a>),
+    SentenceDe(&'a str),
 }
 
 pub fn definition_parser<'i, E>(input: &'i str) -> IResult<&'i str, Definition, E>
@@ -107,6 +107,6 @@ where
 {
     alt((
         map(reference_parser, Definition::Reference),
-        map(field_parser, Definition::Field),
+        map(sentence_de_parser, Definition::SentenceDe),
     ))(input)
 }

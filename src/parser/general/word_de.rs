@@ -1,84 +1,16 @@
 use nom::{
-    branch::alt,
-    bytes::complete::take_while1,
-    character::complete::{char, satisfy},
-    combinator::recognize,
-    error::ParseError,
-    sequence::tuple,
-    IResult,
+    bytes::complete::take_while1, character::complete::satisfy, combinator::recognize,
+    error::ParseError, sequence::tuple, IResult,
 };
 
 /*
-WordDe
-    WordDePlain
-    WordDeExclamation
-    WordDeQuestion
-    WordDeHyphen
-*/
-pub fn word_de_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, &'i str, E> {
-    alt((
-        word_de_plain_parser,
-        word_de_exclamation_parser,
-        word_de_question_parser,
-        word_de_hyphen_parser,
-    ))(input)
-}
-
-/*
-WordDeExclamation
-    WordDePlain "!"
-*/
-pub fn word_de_exclamation_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
-    recognize(tuple((word_de_plain_parser, char('!'))))(input)
-}
-
-/*
-WordDeQuestion
-    WordDePlain "!"
-*/
-pub fn word_de_question_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
-    recognize(tuple((word_de_plain_parser, char('?'))))(input)
-}
-
-// todo: allow WordDeSmall?
-/*
-WordDeHyphen
-    WordDeBig "-" WordDeBig
-    WordDeSmall "-"
-*/
-pub fn word_de_hyphen_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
-    recognize(tuple((word_de_big_parser, char('-'), word_de_big_parser)))(input)
-}
-
-/*
-WordDePlain
-    WordDeBig
-    WordDeSmall
-*/
-pub fn word_de_plain_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
-    alt((word_de_big_parser, word_de_small_parser))(input)
-}
-
-/*
-// note: require at least two letters
 WordDeSmall
-    CharDeSmall{2,}
+    CharDeSmall+
 */
 pub fn word_de_small_parser<'i, E: ParseError<&'i str>>(
     input: &'i str,
 ) -> IResult<&'i str, &'i str, E> {
-    recognize(tuple((
-        satisfy(is_char_de_small),
-        take_while1(is_char_de_small),
-    )))(input)
+    take_while1(is_char_de_small)(input)
 }
 
 #[test]
@@ -93,8 +25,8 @@ fn test_word_de_small_parser() {
     assert!(c.is_err());
 }
 
-/*
 // note: require at least two letters
+/*
 WordDeBig
     CharDeBig CharDeSmall+
 */
