@@ -5,12 +5,9 @@ mod expression;
 mod form;
 mod term;
 
-use std::num::ParseIntError;
-
 use nom::{
     branch::alt,
     combinator::{eof, map},
-    error::{FromExternalError, ParseError},
     multi::many1,
     sequence::{separated_pair, terminated},
     IResult,
@@ -18,6 +15,7 @@ use nom::{
 
 use character::nlwsws_parser;
 use form::{form_parser, VerbSingleForm};
+use nom_supreme::error::ErrorTree;
 use term::{term_infinitive_parser, term_parser, VerbTerm, VerbTermInfinitive};
 
 /*
@@ -31,10 +29,7 @@ pub enum VerbEntry<'a> {
     Multi(VerbMultiEntry<'a>),
 }
 
-pub fn parser<'i, E>(input: &'i str) -> IResult<&'i str, VerbEntry, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn parser(input: &str) -> IResult<&str, VerbEntry, ErrorTree<&str>> {
     alt((
         terminated(map(single_entry_parser, VerbEntry::Single), eof),
         terminated(map(multi_entry_parser, VerbEntry::Multi), eof),
@@ -48,10 +43,7 @@ VerbSingleEntry
 #[derive(Debug)]
 pub struct VerbSingleEntry<'a>(VerbTermInfinitive<'a>, VerbSingleForm<'a>);
 
-pub fn single_entry_parser<'i, E>(input: &'i str) -> IResult<&'i str, VerbSingleEntry, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn single_entry_parser(input: &str) -> IResult<&str, VerbSingleEntry, ErrorTree<&str>> {
     map(
         separated_pair(term_infinitive_parser, nlwsws_parser, form_parser),
         |(term, form)| VerbSingleEntry(term, form),
@@ -65,9 +57,7 @@ VerbMultiEntry
 #[derive(Debug)]
 pub struct VerbMultiEntry<'a>(VerbTerm<'a>, Vec<VerbForm<'a>>);
 
-pub fn multi_entry_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, VerbMultiEntry, E> {
+pub fn multi_entry_parser(input: &str) -> IResult<&str, VerbMultiEntry, ErrorTree<&str>> {
     map(
         separated_pair(term_parser, nlwsws_parser, many1(entry_parser)),
         |(term, forms)| VerbMultiEntry(term, forms),
@@ -81,6 +71,6 @@ VerbForm
 #[derive(Debug)]
 pub struct VerbForm<'a>(&'a str); // todo:
 
-pub fn entry_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, VerbForm, E> {
+pub fn entry_parser(input: &str) -> IResult<&str, VerbForm, ErrorTree<&str>> {
     todo!()
 }

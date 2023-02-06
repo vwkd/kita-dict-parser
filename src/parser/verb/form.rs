@@ -1,11 +1,5 @@
-use std::num::ParseIntError;
-
-use nom::{
-    combinator::map,
-    error::{FromExternalError, ParseError},
-    sequence::tuple,
-    IResult,
-};
+use nom::{combinator::map, sequence::tuple, IResult};
+use nom_supreme::error::ErrorTree;
 
 use crate::parser::general::character::ws_parser;
 
@@ -22,10 +16,7 @@ VerbSingleForm
 #[derive(Debug)]
 pub struct VerbSingleForm<'a>(VerbCategory, VerbConjugation<'a>, VerbExpression<'a>);
 
-pub fn form_parser<'i, E>(input: &'i str) -> IResult<&'i str, VerbSingleForm<'i>, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn form_parser(input: &str) -> IResult<&str, VerbSingleForm, ErrorTree<&str>> {
     map(
         tuple((
             category_parser,

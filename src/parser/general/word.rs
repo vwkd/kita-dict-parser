@@ -1,5 +1,3 @@
-use std::num::ParseIntError;
-
 use super::{
     character::{integer_parser, ws_parser},
     word_de::{word_de_big_parser, word_de_small_parser},
@@ -9,20 +7,17 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::recognize,
-    error::{FromExternalError, ParseError},
     multi::separated_list1,
     sequence::{delimited, pair, separated_pair, terminated, tuple},
     IResult,
 };
+use nom_supreme::error::ErrorTree;
 
 /*
 SentenceDe
   SentenceDePart (ws SentenceDePart)*
 */
-pub fn sentence_de_parser<'i, E>(input: &'i str) -> IResult<&'i str, &'i str, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     recognize(separated_list1(
         ws_parser,
         sentence_de_part_parser,
@@ -34,10 +29,7 @@ SentenceDePart
   "(" WordsDe ")"
   WordsDe
 */
-pub fn sentence_de_part_parser<'i, E>(input: &'i str) -> IResult<&'i str, &'i str, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     alt((
         recognize(delimited(char('('), words_de_parser, char(')'))),
         words_de_parser,
@@ -48,10 +40,7 @@ where
 WordsDe
   WordDe (SeparatorDe WordDe)*
 */
-pub fn words_de_parser<'i, E>(input: &'i str) -> IResult<&'i str, &'i str, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn words_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     recognize(separated_list1(separator_de_parser, word_de_parser))(input)
 }
 
@@ -61,9 +50,7 @@ SeparatorDe
   "," ws
   "/"
 */
-pub fn separator_de_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
+pub fn separator_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     alt((
         recognize(ws_parser),
         recognize(terminated(char(','), ws_parser)),
@@ -85,10 +72,7 @@ WordDe
   WordDeBig
   // ...
 */
-pub fn word_de_parser<'i, E>(input: &'i str) -> IResult<&'i str, &'i str, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     alt((
         recognize(integer_parser),
         shorthand_de_parser,
@@ -193,9 +177,7 @@ ShorthandDe
   // "WG"
   // "w. Vn."
 */
-pub fn shorthand_de_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
+pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     alt((
         alt((
             tag("b."),

@@ -1,10 +1,5 @@
-use std::num::ParseIntError;
-
-use nom::{
-    combinator::map,
-    error::{FromExternalError, ParseError},
-    IResult,
-};
+use nom::{combinator::map, IResult};
+use nom_supreme::error::ErrorTree;
 
 use crate::parser::general::word::sentence_de_parser;
 
@@ -16,9 +11,6 @@ VerbExpression
 #[derive(Debug)]
 pub struct VerbExpression<'a>(&'a str);
 
-pub fn expression_parser<'i, E>(input: &'i str) -> IResult<&'i str, VerbExpression<'i>, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn expression_parser(input: &str) -> IResult<&str, VerbExpression, ErrorTree<&str>> {
     map(sentence_de_parser, VerbExpression)(input)
 }

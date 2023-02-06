@@ -3,10 +3,10 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::map,
-    error::ParseError,
     sequence::{delimited, separated_pair, terminated},
     IResult,
 };
+use nom_supreme::error::ErrorTree;
 
 use crate::parser::general::{character::ws_parser, word_ka::word_ka_small_parser};
 
@@ -43,9 +43,7 @@ pub enum PerfectiveS1<'a> {
     // ...
 }
 
-pub fn conjugation_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, VerbConjugation<'i>, E> {
+pub fn conjugation_parser(input: &str) -> IResult<&str, VerbConjugation, ErrorTree<&str>> {
     map(
         separated_pair(form_class1_parser, ws_parser, form_class23_parser),
         |((present_s1, future_s1), (aorist_s1, perfective_s1))| {
@@ -59,9 +57,7 @@ VerbFormClass1
   WordKaSmall ws "fut" ws WordKaSmall
   WordKaSmall "," ws WordKaSmall
 */
-pub fn form_class1_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, (PresentS1<'i>, FutureS1<'i>), E> {
+pub fn form_class1_parser(input: &str) -> IResult<&str, (PresentS1, FutureS1), ErrorTree<&str>> {
     alt((
         separated_pair(
             map(word_ka_small_parser, PresentS1::Full),
@@ -80,9 +76,9 @@ pub fn form_class1_parser<'i, E: ParseError<&'i str>>(
 VerbFormClass23
   "(" WordKaSmall ", " WordKaSmall ")"
 */
-pub fn form_class23_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, (AoristS1<'i>, PerfectiveS1<'i>), E> {
+pub fn form_class23_parser(
+    input: &str,
+) -> IResult<&str, (AoristS1, PerfectiveS1), ErrorTree<&str>> {
     delimited(
         char('('),
         separated_pair(

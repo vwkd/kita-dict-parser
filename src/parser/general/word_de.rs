@@ -1,27 +1,26 @@
 use nom::{
     bytes::complete::take_while1, character::complete::satisfy, combinator::recognize,
-    error::ParseError, sequence::tuple, IResult,
+    sequence::tuple, IResult,
 };
+use nom_supreme::error::ErrorTree;
 
 /*
 WordDeSmall
     CharDeSmall+
 */
-pub fn word_de_small_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
+pub fn word_de_small_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     take_while1(is_char_de_small)(input)
 }
 
 #[test]
 fn test_word_de_small_parser() {
-    let a = word_de_small_parser::<nom::error::Error<&str>>("bär");
+    let a = word_de_small_parser("bär");
     assert!(a.is_ok());
 
-    let b = word_de_small_parser::<nom::error::Error<&str>>(" bär");
+    let b = word_de_small_parser(" bär");
     assert!(b.is_err());
 
-    let c = word_de_small_parser::<nom::error::Error<&str>>("Bär");
+    let c = word_de_small_parser("Bär");
     assert!(c.is_err());
 }
 
@@ -30,9 +29,7 @@ fn test_word_de_small_parser() {
 WordDeBig
     CharDeBig CharDeSmall+
 */
-pub fn word_de_big_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
+pub fn word_de_big_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     recognize(tuple((
         satisfy(is_char_de_big),
         take_while1(is_char_de_small),
@@ -41,13 +38,13 @@ pub fn word_de_big_parser<'i, E: ParseError<&'i str>>(
 
 #[test]
 fn test_word_de_big_parser() {
-    let a = word_de_big_parser::<nom::error::Error<&str>>("Bär");
+    let a = word_de_big_parser("Bär");
     assert!(a.is_ok());
 
-    let b = word_de_big_parser::<nom::error::Error<&str>>(" Bär");
+    let b = word_de_big_parser(" Bär");
     assert!(b.is_err());
 
-    let c = word_de_big_parser::<nom::error::Error<&str>>("bär");
+    let c = word_de_big_parser("bär");
     assert!(c.is_err());
 }
 

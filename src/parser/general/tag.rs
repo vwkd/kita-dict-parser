@@ -3,11 +3,11 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::{map, value},
-    error::ParseError,
     multi::separated_list1,
     sequence::{delimited, terminated},
     IResult,
 };
+use nom_supreme::error::ErrorTree;
 
 use super::character::ws_parser;
 
@@ -15,9 +15,7 @@ use super::character::ws_parser;
 TagsWhitespace
     Tags ws
 */
-pub fn tags_whitespace_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, Tags, E> {
+pub fn tags_whitespace_parser(input: &str) -> IResult<&str, Tags, ErrorTree<&str>> {
     terminated(tags_parser, ws_parser)(input)
 }
 
@@ -28,7 +26,7 @@ Tags
 #[derive(Debug)]
 pub struct Tags(Vec<Tag>);
 
-pub fn tags_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, Tags, E> {
+pub fn tags_parser(input: &str) -> IResult<&str, Tags, ErrorTree<&str>> {
     map(
         delimited(
             char('{'),
@@ -53,7 +51,7 @@ pub enum Tag {
 /* Rename tags
 * remove trailing period and make uppercase
 */
-pub fn tag_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, Tag, E> {
+pub fn tag_parser(input: &str) -> IResult<&str, Tag, ErrorTree<&str>> {
     alt((
         value(Tag::BIOL, tag("biol.")),
         // ...

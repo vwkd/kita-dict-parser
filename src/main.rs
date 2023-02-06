@@ -11,7 +11,7 @@ fn main() {
     let DictData(lines_noverbs, lines_verbs) = load_data(NEXT_PAGE).expect("Error loading data");
 
     for (index, line) in lines_noverbs.into_iter().enumerate() {
-        let entry = general::parser::<nom::error::Error<&str>>(&line);
+        let entry = general::parser(&line);
 
         match entry {
             Err(e) => {
@@ -26,7 +26,7 @@ fn main() {
     }
 
     for (index, line) in lines_verbs.into_iter().enumerate() {
-        let entry = verb::parser::<nom::error::Error<&str>>(&line);
+        let entry = verb::parser(&line);
 
         match entry {
             Err(e) => {

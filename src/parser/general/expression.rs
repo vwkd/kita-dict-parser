@@ -1,12 +1,10 @@
-use std::num::ParseIntError;
-
 use nom::branch::alt;
 use nom::character::complete::char;
 use nom::combinator::map;
-use nom::error::{FromExternalError, ParseError};
 use nom::multi::separated_list1;
 use nom::sequence::{separated_pair, terminated};
 use nom::IResult;
+use nom_supreme::error::ErrorTree;
 
 use super::character::{integer_parser, ws_parser};
 use super::reference::{reference_parser, Reference};
@@ -24,12 +22,7 @@ pub enum Expression<'a> {
     Usages(Usages<'a>),
 }
 
-pub fn expression_parser<'i, E>(
-    input: &'i str,
-) -> IResult<&'i str, Expression, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn expression_parser(input: &str) -> IResult<&str, Expression, ErrorTree<&str>> {
     alt((
         map(usages_parser, Expression::Usages),
         map(usage_parser, Expression::Usage),
@@ -44,10 +37,7 @@ Usages
 #[derive(Debug)]
 pub struct Usages<'a>(Vec<UsageItem<'a>>);
 
-pub fn usages_parser<'i, E>(input: &'i str) -> IResult<&'i str, Usages, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn usages_parser(input: &str) -> IResult<&str, Usages, ErrorTree<&str>> {
     // todo: create and use separated_list2
     map(separated_list1(ws_parser, usage_item_parser), Usages)(input)
 }
@@ -59,10 +49,7 @@ UsageItem(i)
 #[derive(Debug)]
 pub struct UsageItem<'a>(Usage<'a>, Index);
 
-pub fn usage_item_parser<'i, E>(input: &'i str) -> IResult<&'i str, UsageItem, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn usage_item_parser(input: &str) -> IResult<&str, UsageItem, ErrorTree<&str>> {
     map(
         separated_pair(
             integer_parser,
@@ -83,10 +70,7 @@ Usage
 #[derive(Debug)]
 pub struct Usage<'a>(Vec<Definition<'a>>);
 
-pub fn usage_parser<'i, E>(input: &'i str) -> IResult<&'i str, Usage, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn usage_parser(input: &str) -> IResult<&str, Usage, ErrorTree<&str>> {
     map(
         separated_list1(terminated(char(';'), ws_parser), definition_parser),
         Usage,
@@ -104,10 +88,7 @@ pub enum Definition<'a> {
     SentenceDe(&'a str),
 }
 
-pub fn definition_parser<'i, E>(input: &'i str) -> IResult<&'i str, Definition, E>
-where
-    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
-{
+pub fn definition_parser(input: &str) -> IResult<&str, Definition, ErrorTree<&str>> {
     alt((
         map(reference_parser, Definition::Reference),
         map(sentence_de_parser, Definition::SentenceDe),

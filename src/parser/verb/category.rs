@@ -1,4 +1,5 @@
-use nom::{branch::alt, bytes::complete::tag, combinator::value, error::ParseError, IResult};
+use nom::{branch::alt, bytes::complete::tag, combinator::value, IResult};
+use nom_supreme::error::ErrorTree;
 
 /*
 VerbCategory
@@ -63,9 +64,7 @@ pub enum VerbCategory {
     ZP3,
 }
 
-pub fn category_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, VerbCategory, E> {
+pub fn category_parser(input: &str) -> IResult<&str, VerbCategory, ErrorTree<&str>> {
     alt((
         alt((
             value(VerbCategory::IV1, tag("IV¹")),

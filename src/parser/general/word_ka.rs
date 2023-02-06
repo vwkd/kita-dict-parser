@@ -3,10 +3,10 @@ use nom::{
     bytes::complete::{tag, take_while1},
     character::complete::char,
     combinator::{map, recognize},
-    error::ParseError,
     sequence::{delimited, tuple},
     IResult,
 };
+use nom_supreme::error::ErrorTree;
 
 use super::Value;
 
@@ -21,9 +21,7 @@ pub enum HeadwordKa<'a> {
     WithRoot(WordRootKa<'a>),
 }
 
-pub fn headword_ka_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, HeadwordKa<'i>, E> {
+pub fn headword_ka_parser(input: &str) -> IResult<&str, HeadwordKa, ErrorTree<&str>> {
     alt((
         map(word_root_ka_parser, HeadwordKa::WithRoot),
         map(word_ka_parser, HeadwordKa::Plain),
@@ -40,9 +38,7 @@ WordRootKa
 /// srtart, root, end
 pub struct WordRootKa<'a>(Option<Value<'a>>, Value<'a>, Option<Value<'a>>);
 
-pub fn word_root_ka_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, WordRootKa<'i>, E> {
+pub fn word_root_ka_parser(input: &str) -> IResult<&str, WordRootKa, ErrorTree<&str>> {
     alt((
         map(
             tuple((root_ka_parser, word_ka_small_parser)),
@@ -63,7 +59,7 @@ pub fn word_root_ka_parser<'i, E: ParseError<&'i str>>(
 RootKa
     "**" WordKa "**"
 */
-pub fn root_ka_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, &'i str, E> {
+pub fn root_ka_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     delimited(tag("**"), word_ka_parser, tag("**"))(input)
 }
 
@@ -72,7 +68,7 @@ WordKa
     WordKaHyphen
     WordKaSmall
 */
-pub fn word_ka_parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, &'i str, E> {
+pub fn word_ka_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     alt((word_ka_hyphen_parser, word_ka_small_parser))(input)
 }
 
@@ -84,9 +80,7 @@ WordKaHyphen
     WordKaSmall "-"
     // WordKaSmall "-" WordDeBig
 */
-pub fn word_ka_hyphen_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
+pub fn word_ka_hyphen_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     alt((
         recognize(tuple((char('-'), word_ka_small_parser))),
         recognize(tuple((
@@ -103,22 +97,20 @@ pub fn word_ka_hyphen_parser<'i, E: ParseError<&'i str>>(
 WordKaSmall
     CharKaSmall+
 */
-pub fn word_ka_small_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, &'i str, E> {
+pub fn word_ka_small_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     take_while1(is_char_ka)(input)
 }
 
 #[test]
 fn test_word_ka_small_parser() {
-    let a = word_ka_small_parser::<nom::error::Error<&str>>("კატა");
+    let a = word_ka_small_parser("კატა");
     assert!(a.is_ok());
 
-    let b = word_ka_small_parser::<nom::error::Error<&str>>(" კატა");
+    let b = word_ka_small_parser(" კატა");
     assert!(b.is_err());
 
     // beware: first is capital letter, different from small letters!
-    let c = word_ka_small_parser::<nom::error::Error<&str>>("Კატა");
+    let c = word_ka_small_parser("Კატა");
     assert!(c.is_err());
 }
 
