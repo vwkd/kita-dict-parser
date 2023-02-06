@@ -2,14 +2,13 @@ use std::num::ParseIntError;
 
 use nom::branch::alt;
 use nom::bytes::complete::tag;
-use nom::character::complete::digit1;
-use nom::combinator::{map, map_res};
+use nom::combinator::map;
 use nom::error::{FromExternalError, ParseError};
 use nom::multi::separated_list1;
 use nom::sequence::separated_pair;
 use nom::IResult;
 
-use super::character::ws_parser;
+use super::character::{integer_parser, ws_parser};
 use super::reference::{reference_parser, Reference};
 use super::word::sentence_de_parser;
 use super::Index;
@@ -64,11 +63,7 @@ where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
     map(
-        separated_pair(
-            map_res(digit1, |s: &str| s.parse::<u8>()),
-            tag(". "),
-            usage_parser,
-        ),
+        separated_pair(integer_parser, tag(". "), usage_parser),
         |(index, usage)| UsageItem(usage, index),
     )(input)
 }

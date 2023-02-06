@@ -1,11 +1,10 @@
 use std::num::ParseIntError;
 
-use super::character::ws_parser;
+use super::character::{integer_parser, ws_parser};
 use super::tag::{tags_whitespace_parser, Tags};
 use super::term::{term_parser, Term};
 use super::Index;
-use nom::character::complete::digit1;
-use nom::combinator::{map, map_res, opt};
+use nom::combinator::{map, opt};
 use nom::error::FromExternalError;
 use nom::sequence::{delimited, separated_pair, tuple};
 use nom::{branch::alt, bytes::complete::tag, combinator::value, error::ParseError, IResult};
@@ -33,17 +32,13 @@ where
 
 /*
 WhitespaceUsageIndex
-    ws "(Pkt." ws Digit ")"
+    ws "(Pkt." ws Integer ")"
 */
 pub fn whitespace_usage_index_parser<'i, E>(input: &'i str) -> IResult<&'i str, u8, E>
 where
     E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
 {
-    delimited(
-        tag(" (Pkt. "),
-        map_res(digit1, |s: &str| s.parse::<u8>()),
-        tag(")"),
-    )(input)
+    delimited(tag(" (Pkt. "), integer_parser, tag(")"))(input)
 }
 
 /*

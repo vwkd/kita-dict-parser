@@ -5,10 +5,12 @@ mod expression;
 mod form;
 mod term;
 
+use std::num::ParseIntError;
+
 use nom::{
     branch::alt,
     combinator::{eof, map},
-    error::ParseError,
+    error::{FromExternalError, ParseError},
     multi::many1,
     sequence::{separated_pair, terminated},
     IResult,
@@ -29,7 +31,10 @@ pub enum VerbEntry<'a> {
     Multi(VerbMultiEntry<'a>),
 }
 
-pub fn parser<'i, E: ParseError<&'i str>>(input: &'i str) -> IResult<&'i str, VerbEntry, E> {
+pub fn parser<'i, E>(input: &'i str) -> IResult<&'i str, VerbEntry, E>
+where
+    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
+{
     alt((
         terminated(map(single_entry_parser, VerbEntry::Single), eof),
         terminated(map(multi_entry_parser, VerbEntry::Multi), eof),
@@ -43,9 +48,10 @@ VerbSingleEntry
 #[derive(Debug)]
 pub struct VerbSingleEntry<'a>(VerbTermInfinitive<'a>, VerbSingleForm<'a>);
 
-pub fn single_entry_parser<'i, E: ParseError<&'i str>>(
-    input: &'i str,
-) -> IResult<&'i str, VerbSingleEntry, E> {
+pub fn single_entry_parser<'i, E>(input: &'i str) -> IResult<&'i str, VerbSingleEntry, E>
+where
+    E: ParseError<&'i str> + FromExternalError<&'i str, ParseIntError>,
+{
     map(
         separated_pair(term_infinitive_parser, nlwsws_parser, form_parser),
         |(term, form)| VerbSingleEntry(term, form),
