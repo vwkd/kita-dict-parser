@@ -1,5 +1,7 @@
 use itertools::Itertools;
 use regex::Regex;
+use std::error::Error;
+use std::fmt;
 use std::fs;
 use std::io;
 
@@ -11,13 +13,44 @@ pub enum ImportError {
     Parse(regex::Error),
 }
 
+impl fmt::Display for ImportError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ImportError::Io(err) => write!(f, "IO error: {}", err),
+            ImportError::Parse(err) => write!(f, "Parse error: {}", err),
+        }
+    }
+}
+
+impl Error for ImportError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            ImportError::Io(err) => Some(err),
+            ImportError::Parse(err) => Some(err),
+        }
+    }
+}
+
+impl From<io::Error> for ImportError {
+    fn from(err: io::Error) -> Self {
+        Self::Io(err)
+    }
+}
+
+impl From<regex::Error> for ImportError {
+    fn from(err: regex::Error) -> Self {
+        Self::Parse(err)
+    }
+}
+
 /// first field is collection of all entries except verbs,
 /// second is collection of verb entries
 pub struct DictData(pub Vec<String>, pub Vec<String>);
 
 pub fn load_data(next_page: &str) -> Result<DictData, ImportError> {
-    let f = load_file(PATH).map_err(ImportError::Io)?;
-    preprocess(&f, next_page).map_err(ImportError::Parse)
+    let text = load_file(PATH)?;
+    let data = preprocess(&text, next_page)?;
+    Ok(data)
 }
 
 fn load_file(path: &str) -> io::Result<String> {
