@@ -1,7 +1,7 @@
 use nom::{combinator::map, error::context, IResult};
 use nom_supreme::error::ErrorTree;
 
-use crate::parser::general::word::sentence_de_parser;
+use crate::parser::general::sentence_de::sentence_de_parser;
 
 /*
 VerbExpression

@@ -10,7 +10,7 @@ use nom_supreme::error::ErrorTree;
 use super::super::utils::KitaError;
 use super::character::{integer_parser, ws_parser};
 use super::reference::{reference_parser, Reference};
-use super::word::sentence_de_parser;
+use super::sentence_de::sentence_de_parser;
 use super::Index;
 
 /*

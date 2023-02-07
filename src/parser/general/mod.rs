@@ -1,9 +1,9 @@
 pub mod character;
 pub mod expression;
 pub mod reference;
+pub mod sentence_de;
 pub mod tag;
 pub mod term;
-pub mod word;
 pub mod word_de;
 pub mod word_ka;
 
