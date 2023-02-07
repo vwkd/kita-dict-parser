@@ -1,6 +1,7 @@
 use super::{
     character::{integer_parser, ws_parser},
     word_de::{word_de_big_parser, word_de_small_parser},
+    word_ka::word_ka_small_parser,
 };
 use nom::{
     branch::alt,
@@ -82,6 +83,7 @@ WordDe
   WordDeBig "-" WordDeSmall
   WordDeBig "(" WordDeSmall ")"
   WordDeBig
+  WordKaSmall "-" WordDeBig
   // ...
 */
 pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
@@ -109,6 +111,7 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
                 char(')'),
             ))),
             word_de_big_parser,
+            recognize(tuple((word_ka_small_parser, char('-'), word_de_big_parser))),
             // ...
         )),
     )(input)
