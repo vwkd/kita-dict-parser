@@ -7,7 +7,7 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
-    combinator::recognize,
+    combinator::{recognize, value, map},
     error::context,
     multi::separated_list1,
     sequence::{delimited, pair, separated_pair, terminated, tuple},
@@ -82,39 +82,68 @@ WordDe
   "(" WordDeSmall ")" WordDeSmall "-"
   WordDeBig "-" WordDeSmall
   WordDeBig "(" WordDeSmall ")"
+  WordDeBig ws GenderMarker
   WordDeBig
   WordKaSmall "-" WordDeBig
   // ...
 */
-pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+#[derive(Debug, Clone)]
+pub enum Word<'a> {
+    Unknown(&'a str),
+    Noun(&'a str, Gender),
+}
+
+pub fn word_de_parser(input: &str) -> IResult<&str, Word, ErrorTree<&str>> {
     context(
         "word_de",
         alt((
-            recognize(integer_parser),
-            shorthand_de_parser,
-            recognize(pair(word_de_small_parser, char('!'))),
-            recognize(tuple((word_de_small_parser, char('-')))),
-            word_de_small_parser,
-            recognize(tuple((char('-'), word_de_small_parser))),
-            recognize(tuple((
+            map(recognize(integer_parser), Word::Unknown),
+            map(shorthand_de_parser, Word::Unknown),
+            map(recognize(pair(word_de_small_parser, char('!'))), Word::Unknown),
+            map(recognize(tuple((word_de_small_parser, char('-')))), Word::Unknown),
+            map(word_de_small_parser, Word::Unknown),
+            map(recognize(tuple((char('-'), word_de_small_parser))), Word::Unknown),
+            map(recognize(tuple((
                 char('('),
                 word_de_small_parser,
                 char(')'),
                 word_de_small_parser,
                 char('-'),
-            ))),
-            recognize(tuple((word_de_big_parser, char('-'), word_de_small_parser))),
-            recognize(tuple((
+            ))), Word::Unknown),
+            map(recognize(tuple((word_de_big_parser, char('-'), word_de_small_parser))), Word::Unknown),
+            map(recognize(tuple((
                 word_de_big_parser,
                 char('('),
                 word_de_small_parser,
                 char(')'),
-            ))),
-            word_de_big_parser,
-            recognize(tuple((word_ka_small_parser, char('-'), word_de_big_parser))),
+            ))), Word::Unknown),
+            map(pair(word_de_big_parser, gender_marker_parser), |(word, gender)| Word::Noun(word, gender)),
+            map(word_de_big_parser, Word::Unknown),
+            map(recognize(tuple((word_ka_small_parser, char('-'), word_de_big_parser))), Word::Unknown),
             // ...
         )),
     )(input)
+}
+
+/*
+GenderMarker
+  "m"
+  "f"
+  "n"
+*/
+#[derive(Debug, Clone)]
+pub enum Gender {
+    Masculine,
+    Feminine,
+    Neutral,
+}
+
+pub fn gender_marker_parser(input: &str) -> IResult<&str, Gender, ErrorTree<&str>> {
+    alt((
+        value(Gender::Masculine, char('m')),
+        value(Gender::Feminine, char('f')),
+        value(Gender::Neutral, char('n')),
+    ))(input)
 }
 
 // todo: add missing, e.g. `z.B.`
