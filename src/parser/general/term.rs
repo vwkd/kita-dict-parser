@@ -1,5 +1,5 @@
 use super::character::superscript_number_parser;
-use super::word_ka::{headword_ka_parser, HeadwordKa};
+use super::sentence_ka::{headword_ka_parser, HeadwordKa};
 use nom::combinator::{map, opt};
 use nom::error::context;
 use nom::sequence::tuple;

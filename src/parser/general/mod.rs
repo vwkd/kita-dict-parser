@@ -2,6 +2,7 @@ pub mod character;
 pub mod expression;
 pub mod reference;
 pub mod sentence_de;
+pub mod sentence_ka;
 pub mod tag;
 pub mod term;
 pub mod word_de;

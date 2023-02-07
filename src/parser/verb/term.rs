@@ -6,9 +6,8 @@ use nom::{
 };
 use nom_supreme::error::ErrorTree;
 
-use crate::parser::general::word_ka::root_ka_parser;
-
 use super::super::general::character::superscript_number_parser;
+use super::super::general::sentence_ka::root_ka_parser;
 use super::{super::general::Index, character::infinitive_suffix_parser};
 
 /*
