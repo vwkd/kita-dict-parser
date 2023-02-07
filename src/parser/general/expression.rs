@@ -42,10 +42,19 @@ Usages
 pub struct Usages<'a>(Vec<UsageItem<'a>>);
 
 pub fn usages_parser(input: &str) -> IResult<&str, Usages, ErrorTree<&str>> {
-    // todo: create and use separated_list2
     context(
         "usages",
-        map(separated_list1(ws_parser, usage_item_parser), Usages),
+        map(
+            separated_pair(
+                usage_item_parser,
+                ws_parser,
+                separated_list1(ws_parser, usage_item_parser),
+            ),
+            |(first, mut rest)| {
+                rest.insert(0, first);
+                Usages(rest)
+            },
+        ),
     )(input)
 }
 
