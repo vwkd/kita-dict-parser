@@ -1,12 +1,13 @@
 use nom::branch::alt;
 use nom::character::complete::char;
-use nom::combinator::map;
+use nom::combinator::{map, map_res};
 use nom::error::context;
 use nom::multi::separated_list1;
 use nom::sequence::{separated_pair, terminated};
 use nom::IResult;
 use nom_supreme::error::ErrorTree;
 
+use super::super::utils::KitaError;
 use super::character::{integer_parser, ws_parser};
 use super::reference::{reference_parser, Reference};
 use super::word::sentence_de_parser;
@@ -37,22 +38,27 @@ pub fn expression_parser(input: &str) -> IResult<&str, Expression, ErrorTree<&st
 Usages
     UsageItem(1) ws UsageItem(2) (ws UsageItem(i))_i=3*
 */
-// todo: implement increasing integers, probably needs custom parser
 #[derive(Debug)]
 pub struct Usages<'a>(Vec<UsageItem<'a>>);
 
 pub fn usages_parser(input: &str) -> IResult<&str, Usages, ErrorTree<&str>> {
     context(
         "usages",
-        map(
+        map_res(
             separated_pair(
                 usage_item_parser,
                 ws_parser,
                 separated_list1(ws_parser, usage_item_parser),
             ),
             |(first, mut rest)| {
+                // hack for missing `separated_list2`
                 rest.insert(0, first);
-                Usages(rest)
+                // validate that integers are increasing with step 1
+                let is_increasing = rest.iter().enumerate().all(|(i, val)| val.1 == i as u8 + 1);
+                if !is_increasing {
+                    return Err(nom::Err::Error(KitaError::IncreasingUsagesList));
+                }
+                Ok(Usages(rest))
             },
         ),
     )(input)
