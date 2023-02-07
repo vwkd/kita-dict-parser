@@ -7,7 +7,7 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
-    combinator::recognize,
+    combinator::{not, recognize},
     error::context,
     multi::separated_list1,
     sequence::{delimited, pair, separated_pair, terminated, tuple},
@@ -90,7 +90,8 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     context(
         "word_de",
         alt((
-            recognize(integer_parser),
+            // beware: negative lookahead for ".", otherwise consumes part of higher-up UsageItem which then fails
+            recognize(terminated(integer_parser, not(char('.')))),
             shorthand_de_parser,
             recognize(pair(word_de_small_parser, char('!'))),
             recognize(tuple((word_de_small_parser, char('-')))),
