@@ -11,6 +11,11 @@ fn main() {
     let DictData(lines_noverbs, lines_verbs) = load_data(NEXT_PAGE).expect("Error loading data");
 
     for (index, line) in lines_noverbs.into_iter().enumerate() {
+        // todo: parse skipped lines
+        if line.contains(['|', '~', '=']) {
+            continue;
+        }
+
         let entry = general::parse(&line);
 
         match entry {
