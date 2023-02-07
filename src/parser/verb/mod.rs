@@ -5,7 +5,9 @@ mod expression;
 mod form;
 mod term;
 
-use nom::{branch::alt, combinator::map, multi::many1, sequence::separated_pair, IResult};
+use nom::{
+    branch::alt, combinator::map, error::context, multi::many1, sequence::separated_pair, IResult,
+};
 
 use character::nlwsws_parser;
 use form::{form_parser, VerbSingleForm};
@@ -38,9 +40,12 @@ VerbSingleEntry
 pub struct VerbSingleEntry<'a>(VerbTermInfinitive<'a>, VerbSingleForm<'a>);
 
 pub fn single_entry_parser(input: &str) -> IResult<&str, VerbSingleEntry, ErrorTree<&str>> {
-    map(
-        separated_pair(term_infinitive_parser, nlwsws_parser, form_parser),
-        |(term, form)| VerbSingleEntry(term, form),
+    context(
+        "single_entry",
+        map(
+            separated_pair(term_infinitive_parser, nlwsws_parser, form_parser),
+            |(term, form)| VerbSingleEntry(term, form),
+        ),
     )(input)
 }
 
@@ -52,9 +57,12 @@ VerbMultiEntry
 pub struct VerbMultiEntry<'a>(VerbTerm<'a>, Vec<VerbForm<'a>>);
 
 pub fn multi_entry_parser(input: &str) -> IResult<&str, VerbMultiEntry, ErrorTree<&str>> {
-    map(
-        separated_pair(term_parser, nlwsws_parser, many1(entry_parser)),
-        |(term, forms)| VerbMultiEntry(term, forms),
+    context(
+        "multi_entry",
+        map(
+            separated_pair(term_parser, nlwsws_parser, many1(entry_parser)),
+            |(term, forms)| VerbMultiEntry(term, forms),
+        ),
     )(input)
 }
 

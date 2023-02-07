@@ -9,7 +9,7 @@ pub mod word_ka;
 
 use character::ws_parser;
 use expression::{expression_parser, Expression};
-use nom::{combinator::map, sequence::separated_pair, IResult};
+use nom::{combinator::map, error::context, sequence::separated_pair, IResult};
 use nom_supreme::{error::ErrorTree, final_parser::final_parser};
 use term::{term_parser, Term};
 
@@ -32,8 +32,11 @@ Entry
 pub struct Entry<'a>(Term<'a>, Expression<'a>);
 
 pub fn entry_parser(input: &str) -> IResult<&str, Entry, ErrorTree<&str>> {
-    map(
-        separated_pair(term_parser, ws_parser, expression_parser),
-        |(t, e)| Entry(t, e),
+    context(
+        "entry",
+        map(
+            separated_pair(term_parser, ws_parser, expression_parser),
+            |(t, e)| Entry(t, e),
+        ),
     )(input)
 }

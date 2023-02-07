@@ -1,4 +1,4 @@
-use nom::{combinator::map, sequence::tuple, IResult};
+use nom::{combinator::map, error::context, sequence::tuple, IResult};
 use nom_supreme::error::ErrorTree;
 
 use crate::parser::general::character::ws_parser;
@@ -17,16 +17,19 @@ VerbSingleForm
 pub struct VerbSingleForm<'a>(VerbCategory, VerbConjugation<'a>, VerbExpression<'a>);
 
 pub fn form_parser(input: &str) -> IResult<&str, VerbSingleForm, ErrorTree<&str>> {
-    map(
-        tuple((
-            category_parser,
-            ws_parser,
-            conjugation_parser,
-            ws_parser,
-            expression_parser,
-        )),
-        |(category, _, conjugation, _, expression)| {
-            VerbSingleForm(category, conjugation, expression)
-        },
+    context(
+        "form",
+        map(
+            tuple((
+                category_parser,
+                ws_parser,
+                conjugation_parser,
+                ws_parser,
+                expression_parser,
+            )),
+            |(category, _, conjugation, _, expression)| {
+                VerbSingleForm(category, conjugation, expression)
+            },
+        ),
     )(input)
 }

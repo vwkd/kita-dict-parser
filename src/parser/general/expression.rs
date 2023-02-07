@@ -1,6 +1,7 @@
 use nom::branch::alt;
 use nom::character::complete::char;
 use nom::combinator::map;
+use nom::error::context;
 use nom::multi::separated_list1;
 use nom::sequence::{separated_pair, terminated};
 use nom::IResult;
@@ -23,10 +24,13 @@ pub enum Expression<'a> {
 }
 
 pub fn expression_parser(input: &str) -> IResult<&str, Expression, ErrorTree<&str>> {
-    alt((
-        map(usages_parser, Expression::Usages),
-        map(usage_parser, Expression::Usage),
-    ))(input)
+    context(
+        "expression",
+        alt((
+            map(usages_parser, Expression::Usages),
+            map(usage_parser, Expression::Usage),
+        )),
+    )(input)
 }
 
 /*
@@ -39,7 +43,10 @@ pub struct Usages<'a>(Vec<UsageItem<'a>>);
 
 pub fn usages_parser(input: &str) -> IResult<&str, Usages, ErrorTree<&str>> {
     // todo: create and use separated_list2
-    map(separated_list1(ws_parser, usage_item_parser), Usages)(input)
+    context(
+        "usages",
+        map(separated_list1(ws_parser, usage_item_parser), Usages),
+    )(input)
 }
 
 /*
@@ -50,13 +57,16 @@ UsageItem(i)
 pub struct UsageItem<'a>(Usage<'a>, Index);
 
 pub fn usage_item_parser(input: &str) -> IResult<&str, UsageItem, ErrorTree<&str>> {
-    map(
-        separated_pair(
-            integer_parser,
-            terminated(char('.'), ws_parser),
-            usage_parser,
+    context(
+        "usage_item",
+        map(
+            separated_pair(
+                integer_parser,
+                terminated(char('.'), ws_parser),
+                usage_parser,
+            ),
+            |(index, usage)| UsageItem(usage, index),
         ),
-        |(index, usage)| UsageItem(usage, index),
     )(input)
 }
 
@@ -71,9 +81,12 @@ Usage
 pub struct Usage<'a>(Vec<Definition<'a>>);
 
 pub fn usage_parser(input: &str) -> IResult<&str, Usage, ErrorTree<&str>> {
-    map(
-        separated_list1(terminated(char(';'), ws_parser), definition_parser),
-        Usage,
+    context(
+        "usage",
+        map(
+            separated_list1(terminated(char(';'), ws_parser), definition_parser),
+            Usage,
+        ),
     )(input)
 }
 
@@ -89,8 +102,11 @@ pub enum Definition<'a> {
 }
 
 pub fn definition_parser(input: &str) -> IResult<&str, Definition, ErrorTree<&str>> {
-    alt((
-        map(reference_parser, Definition::Reference),
-        map(sentence_de_parser, Definition::SentenceDe),
-    ))(input)
+    context(
+        "definition",
+        alt((
+            map(reference_parser, Definition::Reference),
+            map(sentence_de_parser, Definition::SentenceDe),
+        )),
+    )(input)
 }

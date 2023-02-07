@@ -3,6 +3,7 @@ use nom::{
     bytes::complete::{tag, take_while1},
     character::complete::char,
     combinator::{map, recognize},
+    error::context,
     sequence::{delimited, tuple},
     IResult,
 };
@@ -22,10 +23,13 @@ pub enum HeadwordKa<'a> {
 }
 
 pub fn headword_ka_parser(input: &str) -> IResult<&str, HeadwordKa, ErrorTree<&str>> {
-    alt((
-        map(word_root_ka_parser, HeadwordKa::WithRoot),
-        map(word_ka_parser, HeadwordKa::Plain),
-    ))(input)
+    context(
+        "headword_ka",
+        alt((
+            map(word_root_ka_parser, HeadwordKa::WithRoot),
+            map(word_ka_parser, HeadwordKa::Plain),
+        )),
+    )(input)
 }
 
 /*
@@ -39,20 +43,23 @@ WordRootKa
 pub struct WordRootKa<'a>(Option<Value<'a>>, Value<'a>, Option<Value<'a>>);
 
 pub fn word_root_ka_parser(input: &str) -> IResult<&str, WordRootKa, ErrorTree<&str>> {
-    alt((
-        map(
-            tuple((root_ka_parser, word_ka_small_parser)),
-            |(root, end)| WordRootKa(None, root, Some(end)),
-        ),
-        map(
-            tuple((word_ka_small_parser, root_ka_parser, word_ka_small_parser)),
-            |(start, root, end)| WordRootKa(Some(start), root, Some(end)),
-        ),
-        map(
-            tuple((word_ka_small_parser, root_ka_parser)),
-            |(start, root)| WordRootKa(Some(start), root, None),
-        ),
-    ))(input)
+    context(
+        "wort_root_ka",
+        alt((
+            map(
+                tuple((root_ka_parser, word_ka_small_parser)),
+                |(root, end)| WordRootKa(None, root, Some(end)),
+            ),
+            map(
+                tuple((word_ka_small_parser, root_ka_parser, word_ka_small_parser)),
+                |(start, root, end)| WordRootKa(Some(start), root, Some(end)),
+            ),
+            map(
+                tuple((word_ka_small_parser, root_ka_parser)),
+                |(start, root)| WordRootKa(Some(start), root, None),
+            ),
+        )),
+    )(input)
 }
 
 /*
@@ -60,7 +67,7 @@ RootKa
     "**" WordKa "**"
 */
 pub fn root_ka_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    delimited(tag("**"), word_ka_parser, tag("**"))(input)
+    context("root_ka", delimited(tag("**"), word_ka_parser, tag("**")))(input)
 }
 
 /*
@@ -69,7 +76,10 @@ WordKa
     WordKaSmall
 */
 pub fn word_ka_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    alt((word_ka_hyphen_parser, word_ka_small_parser))(input)
+    context(
+        "word_ka",
+        alt((word_ka_hyphen_parser, word_ka_small_parser)),
+    )(input)
 }
 
 /*
@@ -81,15 +91,18 @@ WordKaHyphen
     // WordKaSmall "-" WordDeBig
 */
 pub fn word_ka_hyphen_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    alt((
-        recognize(tuple((char('-'), word_ka_small_parser))),
-        recognize(tuple((
-            word_ka_small_parser,
-            char('-'),
-            word_ka_small_parser,
-        ))),
-        recognize(tuple((word_ka_small_parser, char('-')))),
-    ))(input)
+    context(
+        "word_ka_hyphen",
+        alt((
+            recognize(tuple((char('-'), word_ka_small_parser))),
+            recognize(tuple((
+                word_ka_small_parser,
+                char('-'),
+                word_ka_small_parser,
+            ))),
+            recognize(tuple((word_ka_small_parser, char('-')))),
+        )),
+    )(input)
 }
 
 /*
@@ -98,7 +111,7 @@ WordKaSmall
     CharKaSmall+
 */
 pub fn word_ka_small_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    take_while1(is_char_ka)(input)
+    context("word_ka_small", take_while1(is_char_ka))(input)
 }
 
 #[test]

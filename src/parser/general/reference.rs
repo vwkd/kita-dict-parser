@@ -3,6 +3,7 @@ use super::tag::{tags_whitespace_parser, Tags};
 use super::term::{term_parser, Term};
 use super::Index;
 use nom::combinator::{map, opt};
+use nom::error::context;
 use nom::sequence::{delimited, separated_pair, terminated, tuple};
 use nom::{
     branch::alt, bytes::complete::tag, character::complete::char, combinator::value,
@@ -18,13 +19,16 @@ Reference
 pub struct Reference<'a>(Term<'a>, Option<Index>, ReferenceKind, Option<Tags>);
 
 pub fn reference_parser(input: &str) -> IResult<&str, Reference, ErrorTree<&str>> {
-    map(
-        separated_pair(
-            tuple((opt(tags_whitespace_parser), reference_kind_parser)),
-            ws_parser,
-            tuple((term_parser, opt(whitespace_usage_index_parser))),
+    context(
+        "reference",
+        map(
+            separated_pair(
+                tuple((opt(tags_whitespace_parser), reference_kind_parser)),
+                ws_parser,
+                tuple((term_parser, opt(whitespace_usage_index_parser))),
+            ),
+            |((tags, kind), (term, index))| Reference(term, index, kind, tags),
         ),
-        |((tags, kind), (term, index))| Reference(term, index, kind, tags),
     )(input)
 }
 
@@ -33,12 +37,15 @@ WhitespaceUsageIndex
     ws "(" "Pkt." ws Integer ")"
 */
 pub fn whitespace_usage_index_parser(input: &str) -> IResult<&str, u8, ErrorTree<&str>> {
-    preceded(
-        ws_parser,
-        delimited(
-            char('('),
-            preceded(terminated(tag("Pkt."), ws_parser), integer_parser),
-            char(')'),
+    context(
+        "whitespace_usage_index",
+        preceded(
+            ws_parser,
+            delimited(
+                char('('),
+                preceded(terminated(tag("Pkt."), ws_parser), integer_parser),
+                char(')'),
+            ),
         ),
     )(input)
 }
@@ -55,11 +62,14 @@ pub enum ReferenceKind {
 }
 
 pub fn reference_kind_parser(input: &str) -> IResult<&str, ReferenceKind, ErrorTree<&str>> {
-    alt((
-        value(
-            ReferenceKind::SeeMeaning,
-            separated_pair(tag("Bed."), ws_parser, tag("s.")),
-        ),
-        value(ReferenceKind::See, tag("s.")),
-    ))(input)
+    context(
+        "reference_kind",
+        alt((
+            value(
+                ReferenceKind::SeeMeaning,
+                separated_pair(tag("Bed."), ws_parser, tag("s.")),
+            ),
+            value(ReferenceKind::See, tag("s.")),
+        )),
+    )(input)
 }

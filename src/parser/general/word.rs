@@ -7,6 +7,7 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::recognize,
+    error::context,
     multi::separated_list1,
     sequence::{delimited, pair, separated_pair, terminated, tuple},
     IResult,
@@ -18,10 +19,10 @@ SentenceDe
   SentenceDePart (ws SentenceDePart)*
 */
 pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    recognize(separated_list1(
-        ws_parser,
-        sentence_de_part_parser,
-    ))(input)
+    context(
+        "sentence_de",
+        recognize(separated_list1(ws_parser, sentence_de_part_parser)),
+    )(input)
 }
 
 /*
@@ -30,10 +31,13 @@ SentenceDePart
   WordsDe
 */
 pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    alt((
-        recognize(delimited(char('('), words_de_parser, char(')'))),
-        words_de_parser,
-    ))(input)
+    context(
+        "sentence_de_part",
+        alt((
+            recognize(delimited(char('('), words_de_parser, char(')'))),
+            words_de_parser,
+        )),
+    )(input)
 }
 
 /*
@@ -41,7 +45,10 @@ WordsDe
   WordDe (SeparatorDe WordDe)*
 */
 pub fn words_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    recognize(separated_list1(separator_de_parser, word_de_parser))(input)
+    context(
+        "words_de",
+        recognize(separated_list1(separator_de_parser, word_de_parser)),
+    )(input)
 }
 
 /*
@@ -51,11 +58,14 @@ SeparatorDe
   "/"
 */
 pub fn separator_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    alt((
-        recognize(ws_parser),
-        recognize(terminated(char(','), ws_parser)),
-        recognize(char('/')),
-    ))(input)
+    context(
+        "separator_de",
+        alt((
+            recognize(ws_parser),
+            recognize(terminated(char(','), ws_parser)),
+            recognize(char('/')),
+        )),
+    )(input)
 }
 
 /*
@@ -73,30 +83,33 @@ WordDe
   // ...
 */
 pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    alt((
-        recognize(integer_parser),
-        shorthand_de_parser,
-        recognize(pair(word_de_small_parser, char('!'))),
-        recognize(tuple((word_de_small_parser, char('-')))),
-        word_de_small_parser,
-        recognize(tuple((char('-'), word_de_small_parser))),
-        recognize(tuple((
-            char('('),
+    context(
+        "word_de",
+        alt((
+            recognize(integer_parser),
+            shorthand_de_parser,
+            recognize(pair(word_de_small_parser, char('!'))),
+            recognize(tuple((word_de_small_parser, char('-')))),
             word_de_small_parser,
-            char(')'),
-            word_de_small_parser,
-            char('-'),
-        ))),
-        recognize(tuple((word_de_big_parser, char('-'), word_de_small_parser))),
-        recognize(tuple((
+            recognize(tuple((char('-'), word_de_small_parser))),
+            recognize(tuple((
+                char('('),
+                word_de_small_parser,
+                char(')'),
+                word_de_small_parser,
+                char('-'),
+            ))),
+            recognize(tuple((word_de_big_parser, char('-'), word_de_small_parser))),
+            recognize(tuple((
+                word_de_big_parser,
+                char('('),
+                word_de_small_parser,
+                char(')'),
+            ))),
             word_de_big_parser,
-            char('('),
-            word_de_small_parser,
-            char(')'),
-        ))),
-        word_de_big_parser,
-        // ...
-    ))(input)
+            // ...
+        )),
+    )(input)
 }
 
 // todo: add missing, e.g. `z.B.`
@@ -178,39 +191,42 @@ ShorthandDe
   // "w. Vn."
 */
 pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    alt((
+    context(
+        "shorthand_de",
         alt((
-            tag("b."),
-            tag("e."),
-            tag("ea."),
-            tag("e-e"),
-            tag("e-m"),
-            tag("e-n"),
-            tag("e-r"),
-            tag("e-s"),
-            tag("et."),
-            tag("fr."),
-            tag("g."),
-            tag("j-d"),
-            tag("j-m"),
-            tag("j-n"),
-            tag("j-s"),
-            tag("l."),
-            tag("m."),
-            tag("m-e"),
-            tag("m-m"),
+            alt((
+                tag("b."),
+                tag("e."),
+                tag("ea."),
+                tag("e-e"),
+                tag("e-m"),
+                tag("e-n"),
+                tag("e-r"),
+                tag("e-s"),
+                tag("et."),
+                tag("fr."),
+                tag("g."),
+                tag("j-d"),
+                tag("j-m"),
+                tag("j-n"),
+                tag("j-s"),
+                tag("l."),
+                tag("m."),
+                tag("m-e"),
+                tag("m-m"),
+            )),
+            alt((
+                tag("m-n"),
+                tag("m-r"),
+                tag("m-s"),
+                tag("ng."),
+                tag("og."),
+                tag("u."),
+                recognize(separated_pair(tag("u."), ws_parser, tag("zw."))),
+                tag("v."),
+                tag("wg."),
+                tag("zs."),
+            )),
         )),
-        alt((
-            tag("m-n"),
-            tag("m-r"),
-            tag("m-s"),
-            tag("ng."),
-            tag("og."),
-            tag("u."),
-            recognize(separated_pair(tag("u."), ws_parser, tag("zw."))),
-            tag("v."),
-            tag("wg."),
-            tag("zs."),
-        )),
-    ))(input)
+    )(input)
 }

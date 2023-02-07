@@ -3,6 +3,7 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::recognize,
+    error::context,
     sequence::{pair, terminated},
     IResult,
 };
@@ -15,7 +16,10 @@ nlwsws
   "\n  "
 */
 pub fn nlwsws_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    recognize(terminated(char('\n'), pair(ws_parser, ws_parser)))(input)
+    context(
+        "nlwsws",
+        recognize(terminated(char('\n'), pair(ws_parser, ws_parser))),
+    )(input)
 }
 
 /*
@@ -24,11 +28,14 @@ Preverb
   // ...
 */
 pub fn preverb_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    alt((
-        tag("გა"),
-        tag("გადა"),
-        //
-    ))(input)
+    context(
+        "preverb",
+        alt((
+            tag("გა"),
+            tag("გადა"),
+            //
+        )),
+    )(input)
 }
 
 /*
@@ -37,9 +44,12 @@ InfinitiveSuffix
   // ...
 */
 pub fn infinitive_suffix_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
-    alt((
-        tag("ობა"),
-        tag("ება"),
-        //
-    ))(input)
+    context(
+        "infinitive_suffix",
+        alt((
+            tag("ობა"),
+            tag("ება"),
+            //
+        )),
+    )(input)
 }
