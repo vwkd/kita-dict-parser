@@ -4,11 +4,10 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::{map, recognize},
-    error::context,
+    error::{context, VerboseError},
     sequence::{delimited, separated_pair, terminated, tuple},
     IResult,
 };
-use nom_supreme::error::ErrorTree;
 
 /*
 HeadwordKa
@@ -21,7 +20,7 @@ pub enum HeadwordKa<'a> {
     Exclamation(WordKa<'a>),
 }
 
-pub fn headword_ka_parser(input: &str) -> IResult<&str, HeadwordKa, ErrorTree<&str>> {
+pub fn headword_ka_parser(input: &str) -> IResult<&str, HeadwordKa, VerboseError<&str>> {
     context(
         "headword_ka",
         alt((
@@ -48,7 +47,7 @@ pub enum WordKa<'a> {
     TwoRoot(WordKaRoot<'a>, WordKaRoot<'a>),
 }
 
-pub fn word_ka_parser(input: &str) -> IResult<&str, WordKa, ErrorTree<&str>> {
+pub fn word_ka_parser(input: &str) -> IResult<&str, WordKa, VerboseError<&str>> {
     context(
         "word_ka",
         alt((
@@ -69,7 +68,7 @@ WordKaPlain
   WordKaSmall
   "-" WordKaSmall
 */
-pub fn word_ka_plain_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn word_ka_plain_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "word_ka_plain",
         alt((
@@ -95,7 +94,7 @@ WordKaRoot
 /// srtart, root, end
 pub struct WordKaRoot<'a>(Option<Value<'a>>, Value<'a>, Option<Value<'a>>);
 
-pub fn word_ka_root_parser(input: &str) -> IResult<&str, WordKaRoot, ErrorTree<&str>> {
+pub fn word_ka_root_parser(input: &str) -> IResult<&str, WordKaRoot, VerboseError<&str>> {
     context(
         "wort_ka_root",
         alt((
@@ -119,7 +118,7 @@ pub fn word_ka_root_parser(input: &str) -> IResult<&str, WordKaRoot, ErrorTree<&
 RootKa
   "**" WordKaSmall "**"
 */
-pub fn root_ka_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn root_ka_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "root_ka",
         delimited(tag("**"), word_ka_small_parser, tag("**")),

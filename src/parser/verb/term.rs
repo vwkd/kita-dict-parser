@@ -1,10 +1,9 @@
 use nom::{
     combinator::{map, opt},
-    error::context,
+    error::{context, VerboseError},
     sequence::tuple,
     IResult,
 };
-use nom_supreme::error::ErrorTree;
 
 use super::super::general::character::superscript_number_parser;
 use super::super::general::sentence_ka::root_ka_parser;
@@ -18,7 +17,9 @@ VerbTermInfinitive
 /// root, infinitive suffix, index
 pub struct VerbTermInfinitive<'a>(&'a str, &'a str, Option<Index>);
 
-pub fn term_infinitive_parser(input: &str) -> IResult<&str, VerbTermInfinitive, ErrorTree<&str>> {
+pub fn term_infinitive_parser(
+    input: &str,
+) -> IResult<&str, VerbTermInfinitive, VerboseError<&str>> {
     context(
         "term_infinitive",
         map(
@@ -39,7 +40,7 @@ VerbTerm
 #[derive(Debug)]
 pub struct VerbTerm<'a>(&'a str, Option<Index>);
 
-pub fn term_parser(input: &str) -> IResult<&str, VerbTerm, ErrorTree<&str>> {
+pub fn term_parser(input: &str) -> IResult<&str, VerbTerm, VerboseError<&str>> {
     context(
         "term",
         map(

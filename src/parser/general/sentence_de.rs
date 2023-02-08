@@ -8,18 +8,17 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::{not, recognize},
-    error::context,
+    error::{context, VerboseError},
     multi::separated_list1,
     sequence::{delimited, pair, separated_pair, terminated, tuple},
     IResult,
 };
-use nom_supreme::error::ErrorTree;
 
 /*
 SentenceDe
   SentenceDePart (ws SentenceDePart)*
 */
-pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "sentence_de",
         recognize(separated_list1(ws_parser, sentence_de_part_parser)),
@@ -32,7 +31,7 @@ SentenceDePart
   "(" WordsDe ")"
   '"' WordsDe '"'
 */
-pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "sentence_de_part",
         alt((
@@ -47,7 +46,7 @@ pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, ErrorTree<&st
 WordsDe
   WordDe (SeparatorDe WordDe)*
 */
-pub fn words_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn words_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "words_de",
         recognize(separated_list1(separator_de_parser, word_de_parser)),
@@ -60,7 +59,7 @@ SeparatorDe
   "," ws
   "/"
 */
-pub fn separator_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn separator_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "separator_de",
         alt((
@@ -89,7 +88,7 @@ WordDe
   WordKaSmall "-" WordDeBig
   // ...
 */
-pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "word_de",
         alt((
@@ -140,7 +139,7 @@ ShorthandOtherDe
   "kaukas."
   "z.B."
 */
-pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "shorthand_other_de",
         alt((tag("durch-ea."), tag("kaukas."), tag("z.B."))),
@@ -224,7 +223,7 @@ ShorthandDe
   // "WG"
   // "w. Vn."
 */
-pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "shorthand_de",
         alt((

@@ -1,14 +1,17 @@
 use nom::{
-    bytes::complete::take_while1, character::complete::satisfy, combinator::recognize,
-    error::context, sequence::tuple, IResult,
+    bytes::complete::take_while1,
+    character::complete::satisfy,
+    combinator::recognize,
+    error::{context, VerboseError},
+    sequence::tuple,
+    IResult,
 };
-use nom_supreme::error::ErrorTree;
 
 /*
 WordDeSmall
     CharDeSmall+
 */
-pub fn word_de_small_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn word_de_small_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context("word_de_small", take_while1(is_char_de_small))(input)
 }
 
@@ -29,7 +32,7 @@ fn test_word_de_small_parser() {
 WordDeBig
     CharDeBig CharDeSmall+
 */
-pub fn word_de_big_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn word_de_big_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "word_de_big",
         recognize(tuple((

@@ -1,10 +1,9 @@
 use super::character::superscript_number_parser;
 use super::sentence_ka::{headword_ka_parser, HeadwordKa};
 use nom::combinator::{map, opt};
-use nom::error::context;
+use nom::error::{context, VerboseError};
 use nom::sequence::tuple;
 use nom::IResult;
-use nom_supreme::error::ErrorTree;
 
 use super::Index;
 
@@ -15,7 +14,7 @@ Term
 #[derive(Debug)]
 pub struct Term<'a>(HeadwordKa<'a>, Option<Index>);
 
-pub fn term_parser(input: &str) -> IResult<&str, Term, ErrorTree<&str>> {
+pub fn term_parser(input: &str) -> IResult<&str, Term, VerboseError<&str>> {
     context(
         "term",
         map(

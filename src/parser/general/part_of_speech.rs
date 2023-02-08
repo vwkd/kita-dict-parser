@@ -1,5 +1,4 @@
-use nom::{branch::alt, bytes::complete::tag, combinator::value, IResult};
-use nom_supreme::error::ErrorTree;
+use nom::{branch::alt, bytes::complete::tag, combinator::value, error::VerboseError, IResult};
 
 /*
 PartOfSpeech
@@ -93,7 +92,7 @@ pub enum PartOfSpeech {
     SPN,
 }
 
-pub fn part_of_speech_parser(input: &str) -> IResult<&str, PartOfSpeech, ErrorTree<&str>> {
+pub fn part_of_speech_parser(input: &str) -> IResult<&str, PartOfSpeech, VerboseError<&str>> {
     alt((
         alt((
             value(PartOfSpeech::A, tag("a")),

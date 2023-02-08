@@ -1,12 +1,15 @@
-use nom::{bytes::complete::take_while1, error::context, IResult};
-use nom_supreme::error::ErrorTree;
+use nom::{
+    bytes::complete::take_while1,
+    error::{context, VerboseError},
+    IResult,
+};
 
 // note: allow one letter
 /*
 WordKaSmall
     CharKaSmall+
 */
-pub fn word_ka_small_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn word_ka_small_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context("word_ka_small", take_while1(is_char_ka))(input)
 }
 

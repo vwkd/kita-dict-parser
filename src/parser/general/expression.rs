@@ -1,11 +1,10 @@
 use nom::branch::alt;
 use nom::character::complete::char;
 use nom::combinator::{map, map_res};
-use nom::error::context;
+use nom::error::{context, VerboseError};
 use nom::multi::separated_list1;
 use nom::sequence::{separated_pair, terminated};
 use nom::IResult;
-use nom_supreme::error::ErrorTree;
 
 use super::super::utils::KitaError;
 use super::character::{integer_parser, ws_parser};
@@ -24,7 +23,7 @@ pub enum Expression<'a> {
     Usages(Usages<'a>),
 }
 
-pub fn expression_parser(input: &str) -> IResult<&str, Expression, ErrorTree<&str>> {
+pub fn expression_parser(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
     context(
         "expression",
         alt((
@@ -41,7 +40,7 @@ Usages
 #[derive(Debug)]
 pub struct Usages<'a>(Vec<UsageItem<'a>>);
 
-pub fn usages_parser(input: &str) -> IResult<&str, Usages, ErrorTree<&str>> {
+pub fn usages_parser(input: &str) -> IResult<&str, Usages, VerboseError<&str>> {
     context(
         "usages",
         map_res(
@@ -71,7 +70,7 @@ UsageItem(i)
 #[derive(Debug)]
 pub struct UsageItem<'a>(Usage<'a>, Index);
 
-pub fn usage_item_parser(input: &str) -> IResult<&str, UsageItem, ErrorTree<&str>> {
+pub fn usage_item_parser(input: &str) -> IResult<&str, UsageItem, VerboseError<&str>> {
     context(
         "usage_item",
         map(
@@ -95,7 +94,7 @@ Usage
 #[derive(Debug)]
 pub struct Usage<'a>(Vec<Definition<'a>>);
 
-pub fn usage_parser(input: &str) -> IResult<&str, Usage, ErrorTree<&str>> {
+pub fn usage_parser(input: &str) -> IResult<&str, Usage, VerboseError<&str>> {
     context(
         "usage",
         map(
@@ -116,7 +115,7 @@ pub enum Definition<'a> {
     SentenceDe(&'a str),
 }
 
-pub fn definition_parser(input: &str) -> IResult<&str, Definition, ErrorTree<&str>> {
+pub fn definition_parser(input: &str) -> IResult<&str, Definition, VerboseError<&str>> {
     context(
         "definition",
         alt((

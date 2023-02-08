@@ -1,5 +1,10 @@
-use nom::{branch::alt, bytes::complete::tag, combinator::value, error::context, IResult};
-use nom_supreme::error::ErrorTree;
+use nom::{
+    branch::alt,
+    bytes::complete::tag,
+    combinator::value,
+    error::{context, VerboseError},
+    IResult,
+};
 
 /*
 VerbCategory
@@ -64,7 +69,7 @@ pub enum VerbCategory {
     ZP3,
 }
 
-pub fn category_parser(input: &str) -> IResult<&str, VerbCategory, ErrorTree<&str>> {
+pub fn category_parser(input: &str) -> IResult<&str, VerbCategory, VerboseError<&str>> {
     context(
         "category",
         alt((

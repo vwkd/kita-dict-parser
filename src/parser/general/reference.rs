@@ -3,13 +3,12 @@ use super::tag::{tags_parser, Tags};
 use super::term::{term_parser, Term};
 use super::Index;
 use nom::combinator::{map, opt};
-use nom::error::context;
+use nom::error::{context, VerboseError};
 use nom::sequence::{delimited, separated_pair, terminated, tuple};
 use nom::{
     branch::alt, bytes::complete::tag, character::complete::char, combinator::value,
     sequence::preceded, IResult,
 };
-use nom_supreme::error::ErrorTree;
 
 /*
 Reference
@@ -18,7 +17,7 @@ Reference
 #[derive(Debug)]
 pub struct Reference<'a>(Term<'a>, Option<Index>, ReferenceKind, Option<Tags>);
 
-pub fn reference_parser(input: &str) -> IResult<&str, Reference, ErrorTree<&str>> {
+pub fn reference_parser(input: &str) -> IResult<&str, Reference, VerboseError<&str>> {
     context(
         "reference",
         map(
@@ -39,7 +38,7 @@ pub fn reference_parser(input: &str) -> IResult<&str, Reference, ErrorTree<&str>
 WhitespaceUsageIndex
     ws "(" "Pkt." ws Integer ")"
 */
-pub fn whitespace_usage_index_parser(input: &str) -> IResult<&str, u8, ErrorTree<&str>> {
+pub fn whitespace_usage_index_parser(input: &str) -> IResult<&str, u8, VerboseError<&str>> {
     context(
         "whitespace_usage_index",
         preceded(
@@ -64,7 +63,7 @@ pub enum ReferenceKind {
     See,
 }
 
-pub fn reference_kind_parser(input: &str) -> IResult<&str, ReferenceKind, ErrorTree<&str>> {
+pub fn reference_kind_parser(input: &str) -> IResult<&str, ReferenceKind, VerboseError<&str>> {
     context(
         "reference_kind",
         alt((

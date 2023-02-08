@@ -1,17 +1,16 @@
 use nom::branch::alt;
 use nom::character::complete::char;
 use nom::combinator::{map_res, recognize, value};
-use nom::error::context;
+use nom::error::{context, VerboseError};
 use nom::multi::many0;
 use nom::sequence::pair;
 use nom::IResult;
-use nom_supreme::error::ErrorTree;
 
 /*
 ws
     UNICODE_WHITESPACE_CHARACTER
 */
-pub fn ws_parser(input: &str) -> IResult<&str, char, ErrorTree<&str>> {
+pub fn ws_parser(input: &str) -> IResult<&str, char, VerboseError<&str>> {
     context("ws", char(' '))(input)
 }
 
@@ -28,7 +27,7 @@ SuperscriptNumber
     "⁸"
     "⁹"
 */
-pub fn superscript_number_parser(input: &str) -> IResult<&str, u8, ErrorTree<&str>> {
+pub fn superscript_number_parser(input: &str) -> IResult<&str, u8, VerboseError<&str>> {
     context(
         "superscript_number",
         alt((
@@ -49,7 +48,7 @@ pub fn superscript_number_parser(input: &str) -> IResult<&str, u8, ErrorTree<&st
 Integer
     DigitNonZero (Digit)*
 */
-pub fn integer_parser(input: &str) -> IResult<&str, u8, ErrorTree<&str>> {
+pub fn integer_parser(input: &str) -> IResult<&str, u8, VerboseError<&str>> {
     context(
         "integer",
         map_res(
@@ -64,7 +63,7 @@ Digit
     "0"
     DigitNonZero
 */
-fn digit_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+fn digit_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "digit",
         alt((recognize(char('0')), recognize(digit_non_zero_parser))),
@@ -83,7 +82,7 @@ DigitNonZero
     "8"
     "9"
 */
-fn digit_non_zero_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+fn digit_non_zero_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "digit_non_zero",
         recognize(alt((

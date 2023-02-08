@@ -3,11 +3,10 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::map,
-    error::context,
+    error::{context, VerboseError},
     sequence::{delimited, separated_pair, terminated},
     IResult,
 };
-use nom_supreme::error::ErrorTree;
 
 use crate::parser::general::{character::ws_parser, word_ka::word_ka_small_parser};
 
@@ -44,7 +43,7 @@ pub enum PerfectiveS1<'a> {
     // ...
 }
 
-pub fn conjugation_parser(input: &str) -> IResult<&str, VerbConjugation, ErrorTree<&str>> {
+pub fn conjugation_parser(input: &str) -> IResult<&str, VerbConjugation, VerboseError<&str>> {
     context(
         "conjugation",
         map(
@@ -61,7 +60,7 @@ VerbFormClass1
   WordKaSmall ws "fut" ws WordKaSmall
   WordKaSmall "," ws WordKaSmall
 */
-pub fn form_class1_parser(input: &str) -> IResult<&str, (PresentS1, FutureS1), ErrorTree<&str>> {
+pub fn form_class1_parser(input: &str) -> IResult<&str, (PresentS1, FutureS1), VerboseError<&str>> {
     context(
         "form_class1",
         alt((
@@ -85,7 +84,7 @@ VerbFormClass23
 */
 pub fn form_class23_parser(
     input: &str,
-) -> IResult<&str, (AoristS1, PerfectiveS1), ErrorTree<&str>> {
+) -> IResult<&str, (AoristS1, PerfectiveS1), VerboseError<&str>> {
     context(
         "form_class23",
         delimited(

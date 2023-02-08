@@ -3,12 +3,11 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::{map, value},
-    error::context,
+    error::{context, VerboseError},
     multi::separated_list1,
     sequence::{delimited, terminated},
     IResult,
 };
-use nom_supreme::error::ErrorTree;
 
 use super::character::ws_parser;
 
@@ -19,7 +18,7 @@ Tags
 #[derive(Debug)]
 pub struct Tags(Vec<Tag>);
 
-pub fn tags_parser(input: &str) -> IResult<&str, Tags, ErrorTree<&str>> {
+pub fn tags_parser(input: &str) -> IResult<&str, Tags, VerboseError<&str>> {
     context(
         "tags",
         map(
@@ -164,7 +163,7 @@ pub enum Tag {
     ZO,
 }
 
-pub fn tag_parser(input: &str) -> IResult<&str, Tag, ErrorTree<&str>> {
+pub fn tag_parser(input: &str) -> IResult<&str, Tag, VerboseError<&str>> {
     context(
         "tag",
         terminated(

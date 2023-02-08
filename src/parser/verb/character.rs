@@ -3,11 +3,10 @@ use nom::{
     bytes::complete::tag,
     character::complete::char,
     combinator::recognize,
-    error::context,
+    error::{context, VerboseError},
     sequence::{pair, terminated},
     IResult,
 };
-use nom_supreme::error::ErrorTree;
 
 use crate::parser::general::character::ws_parser;
 
@@ -15,7 +14,7 @@ use crate::parser::general::character::ws_parser;
 nlwsws
   "\n  "
 */
-pub fn nlwsws_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn nlwsws_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "nlwsws",
         recognize(terminated(char('\n'), pair(ws_parser, ws_parser))),
@@ -27,7 +26,7 @@ Preverb
   "გა"
   // ...
 */
-pub fn preverb_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn preverb_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "preverb",
         alt((
@@ -43,7 +42,7 @@ InfinitiveSuffix
   "ობა"
   // ...
 */
-pub fn infinitive_suffix_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+pub fn infinitive_suffix_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "infinitive_suffix",
         alt((
