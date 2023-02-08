@@ -21,7 +21,7 @@ fn main() {
         match entry {
             Err(e) => {
                 eprintln!("{index}: {line}");
-                eprintln!("{:?}\n", e);
+                eprintln!("{:#?}\n", e);
             }
             Ok(entry) => {
                 println!("{index}: {line}");
@@ -36,7 +36,7 @@ fn main() {
         match entry {
             Err(e) => {
                 eprintln!("{index}: {line}");
-                eprintln!("{:?}\n", e);
+                eprintln!("{:#?}\n", e);
             }
             Ok(entry) => {
                 println!("{index}: {line}");
