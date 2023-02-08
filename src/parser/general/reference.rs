@@ -1,5 +1,5 @@
 use super::character::{integer_parser, ws_parser};
-use super::tag::{tags_whitespace_parser, Tags};
+use super::tag::{tags_parser, Tags};
 use super::term::{term_parser, Term};
 use super::Index;
 use nom::combinator::{map, opt};
@@ -13,7 +13,7 @@ use nom_supreme::error::ErrorTree;
 
 /*
 Reference
-    TagsWhitespace? ReferenceKind ws Term WhitespaceUsageIndex?
+    (Tags ws)? ReferenceKind ws Term WhitespaceUsageIndex?
 */
 #[derive(Debug)]
 pub struct Reference<'a>(Term<'a>, Option<Index>, ReferenceKind, Option<Tags>);
@@ -23,7 +23,10 @@ pub fn reference_parser(input: &str) -> IResult<&str, Reference, ErrorTree<&str>
         "reference",
         map(
             separated_pair(
-                tuple((opt(tags_whitespace_parser), reference_kind_parser)),
+                tuple((
+                    opt(terminated(tags_parser, ws_parser)),
+                    reference_kind_parser,
+                )),
                 ws_parser,
                 tuple((term_parser, opt(whitespace_usage_index_parser))),
             ),

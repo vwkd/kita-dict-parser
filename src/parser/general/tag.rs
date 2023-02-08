@@ -13,14 +13,6 @@ use nom_supreme::error::ErrorTree;
 use super::character::ws_parser;
 
 /*
-TagsWhitespace
-    Tags ws
-*/
-pub fn tags_whitespace_parser(input: &str) -> IResult<&str, Tags, ErrorTree<&str>> {
-    context("tags_whitespace", terminated(tags_parser, ws_parser))(input)
-}
-
-/*
 Tags
     "(" Tag ("," ws Tag)* ")"
 */
