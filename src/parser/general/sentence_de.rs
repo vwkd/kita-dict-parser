@@ -170,15 +170,30 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
 
 /*
 ShorthandOtherDe
+  "ca."
   "durch-ea."
   "kaukas."
+  "NG"
   "od."
+  "OG"
+  "SG"
+  "WG"
   "z.B."
 */
 pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "shorthand_other_de",
-        alt((tag("durch-ea."), tag("kaukas."), tag("od."), tag("z.B."))),
+        alt((
+            tag("ca."),
+            tag("durch-ea."),
+            tag("kaukas."),
+            tag("NG"),
+            tag("od."),
+            tag("OG"),
+            tag("SG"),
+            tag("WG"),
+            tag("z.B."),
+        )),
     )(input)
 }
 
