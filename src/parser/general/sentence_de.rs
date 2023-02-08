@@ -76,6 +76,7 @@ WordDe
   Integer
   ShorthandDe
   WordDeSmall "!"
+  WordDeSmall "-" WordDeSmall
   WordDeSmall "-"
   WordDeSmall
   "-" WordDeSmall
@@ -83,6 +84,7 @@ WordDe
   WordDeBig "-" WordDeSmall
   WordDeBig "(" WordDeSmall ")"
   WordDeBig
+  "(" WordDeBig "-" ")" WordDeBig
   WordKaSmall "-" WordDeBig
   // ...
 */
@@ -94,9 +96,14 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
             recognize(terminated(integer_parser, not(char('.')))),
             shorthand_de_parser,
             recognize(pair(word_de_small_parser, char('!'))),
+            recognize(tuple((
+                word_de_small_parser,
+                char('-'),
+                word_de_small_parser,
+            ))),
             recognize(tuple((word_de_small_parser, char('-')))),
             word_de_small_parser,
-            recognize(tuple((char('-'), word_de_small_parser))),
+            recognize(pair(char('-'), word_de_small_parser)),
             recognize(tuple((
                 char('('),
                 word_de_small_parser,
@@ -112,6 +119,13 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
                 char(')'),
             ))),
             word_de_big_parser,
+            recognize(tuple((
+                char('('),
+                word_de_big_parser,
+                char('-'),
+                char(')'),
+                word_de_big_parser,
+            ))),
             recognize(tuple((word_ka_small_parser, char('-'), word_de_big_parser))),
             // ...
         )),
