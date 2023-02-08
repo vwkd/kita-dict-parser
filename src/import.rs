@@ -36,16 +36,19 @@ fn preprocess(text: &str, next_page: &str) -> DictData {
     let re_continued_lines = Regex::new(r"\n♦︎").expect("Invalid Regex");
     let text = re_continued_lines.replace_all(&text2, "");
 
-    let re_verb_lines = Regex::new(r"(?m)^.*\n(^  .*\n)+").expect("Invalid Regex");
+    let re_verb_lines = Regex::new(r"(?m)^.*\n(^  .*\n)*(^  .*)").expect("Invalid Regex");
 
     // let text_noverbs = re_verb_lines.replace_all(&text, "").to_string();
     let text_noverbs = re_verb_lines.split(&text).join("");
-    let lines_noverbs: Vec<String> = text_noverbs.lines().map(|l| l.to_owned()).collect();
+    let lines_noverbs: Vec<String> = text_noverbs
+        .lines()
+        .filter(|l| !l.is_empty())
+        .map(|l| l.to_owned())
+        .collect();
 
-    // trim empty last line
     let lines_verbs: Vec<String> = re_verb_lines
         .find_iter(&text)
-        .map(|m| m.as_str().trim_end().to_owned())
+        .map(|m| m.as_str().to_owned())
         .collect();
 
     DictData(lines_noverbs, lines_verbs)
