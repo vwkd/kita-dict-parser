@@ -81,8 +81,11 @@ WordDe
   WordDeSmall
   "-" WordDeSmall
   "(" WordDeSmall ")" WordDeSmall "-"
+  WordDeBig "-" WordDeBig
   WordDeBig "-" WordDeSmall
+  WordDeBig "-"
   WordDeBig "(" WordDeSmall ")"
+  WordDeBig "..."
   WordDeBig
   "(" WordDeBig "-" ")" WordDeBig
   WordKaSmall "-" WordDeBig
@@ -112,13 +115,16 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
                 word_de_small_parser,
                 char('-'),
             ))),
+            recognize(tuple((word_de_big_parser, char('-'), word_de_big_parser))),
             recognize(tuple((word_de_big_parser, char('-'), word_de_small_parser))),
+            recognize(pair(word_de_big_parser, char('-'))),
             recognize(tuple((
                 word_de_big_parser,
                 char('('),
                 word_de_small_parser,
                 char(')'),
             ))),
+            recognize(pair(word_de_big_parser, tag("..."))),
             word_de_big_parser,
             recognize(tuple((
                 char('('),
@@ -137,12 +143,13 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
 ShorthandOtherDe
   "durch-ea."
   "kaukas."
+  "od."
   "z.B."
 */
 pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "shorthand_other_de",
-        alt((tag("durch-ea."), tag("kaukas."), tag("z.B."))),
+        alt((tag("durch-ea."), tag("kaukas."), tag("od."), tag("z.B."))),
     )(input)
 }
 
