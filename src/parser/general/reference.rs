@@ -1,5 +1,5 @@
 use super::character::{integer_parser, ws_parser};
-use super::tag::{tags_parser, Tags};
+use super::tag::{categories_parser, Categories};
 use super::term::{term_parser, Term};
 use super::Index;
 use nom::combinator::{map, opt};
@@ -12,10 +12,10 @@ use nom::{
 
 /*
 Reference
-    (Tags ws)? ReferenceKind ws Term WhitespaceUsageIndex?
+    (Categories ws)? ReferenceKind ws Term WhitespaceUsageIndex?
 */
 #[derive(Debug)]
-pub struct Reference<'a>(Term<'a>, Option<Index>, ReferenceKind, Option<Tags>);
+pub struct Reference<'a>(Term<'a>, Option<Index>, ReferenceKind, Option<Categories>);
 
 pub fn reference_parser(input: &str) -> IResult<&str, Reference, VerboseError<&str>> {
     context(
@@ -23,13 +23,13 @@ pub fn reference_parser(input: &str) -> IResult<&str, Reference, VerboseError<&s
         map(
             separated_pair(
                 tuple((
-                    opt(terminated(tags_parser, ws_parser)),
+                    opt(terminated(categories_parser, ws_parser)),
                     reference_kind_parser,
                 )),
                 ws_parser,
                 tuple((term_parser, opt(whitespace_usage_index_parser))),
             ),
-            |((tags, kind), (term, index))| Reference(term, index, kind, tags),
+            |((categories, kind), (term, index))| Reference(term, index, kind, categories),
         ),
     )(input)
 }

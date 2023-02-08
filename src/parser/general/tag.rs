@@ -12,28 +12,28 @@ use nom::{
 use super::character::ws_parser;
 
 /*
-Tags
-    "(" Tag ("," ws Tag)* ")"
+Categories
+    "(" Category ("," ws Category)* ")"
 */
 #[derive(Debug)]
-pub struct Tags(Vec<Tag>);
+pub struct Categories(Vec<Category>);
 
-pub fn tags_parser(input: &str) -> IResult<&str, Tags, VerboseError<&str>> {
+pub fn categories_parser(input: &str) -> IResult<&str, Categories, VerboseError<&str>> {
     context(
-        "tags",
+        "categories",
         map(
             delimited(
                 char('('),
-                separated_list1(terminated(char(','), ws_parser), tag_parser),
+                separated_list1(terminated(char(','), ws_parser), category_parser),
                 char(')'),
             ),
-            Tags,
+            Categories,
         ),
     )(input)
 }
 
 /*
-Tag
+Category
     an.
     arch.
     atsch.
@@ -98,7 +98,7 @@ Tag
     zo.
 */
 #[derive(Debug, Clone)]
-pub enum Tag {
+pub enum Category {
     AN,
     ARCH,
     ATSCH,
@@ -163,78 +163,78 @@ pub enum Tag {
     ZO,
 }
 
-pub fn tag_parser(input: &str) -> IResult<&str, Tag, VerboseError<&str>> {
+pub fn category_parser(input: &str) -> IResult<&str, Category, VerboseError<&str>> {
     context(
-        "tag",
+        "category",
         terminated(
             alt((
                 alt((
-                    value(Tag::AN, tag("an")),
-                    value(Tag::ARCH, tag("arch")),
-                    value(Tag::ATSCH, tag("atsch")),
-                    value(Tag::BIOL, tag("biol")),
-                    value(Tag::BOT, tag("bot")),
-                    value(Tag::CHEM, tag("chem")),
-                    value(Tag::CHEW, tag("chew")),
-                    value(Tag::DESP, tag("desp")),
-                    value(Tag::DSCHAW, tag("dschaw")),
-                    value(Tag::ELEKTR, tag("elektr")),
-                    value(Tag::ETHN, tag("ethn")),
-                    value(Tag::EUPH, tag("euph")),
-                    value(Tag::FAM, tag("fam")),
-                    value(Tag::GEOL, tag("geol")),
-                    value(Tag::GR, tag("gr")),
-                    value(Tag::GUD, tag("gud")),
-                    value(Tag::GUR, tag("gur")),
-                    value(Tag::HIST, tag("hist")),
-                    value(Tag::IMER, tag("imer")),
-                    value(Tag::ING, tag("ing")),
+                    value(Category::AN, tag("an")),
+                    value(Category::ARCH, tag("arch")),
+                    value(Category::ATSCH, tag("atsch")),
+                    value(Category::BIOL, tag("biol")),
+                    value(Category::BOT, tag("bot")),
+                    value(Category::CHEM, tag("chem")),
+                    value(Category::CHEW, tag("chew")),
+                    value(Category::DESP, tag("desp")),
+                    value(Category::DSCHAW, tag("dschaw")),
+                    value(Category::ELEKTR, tag("elektr")),
+                    value(Category::ETHN, tag("ethn")),
+                    value(Category::EUPH, tag("euph")),
+                    value(Category::FAM, tag("fam")),
+                    value(Category::GEOL, tag("geol")),
+                    value(Category::GR, tag("gr")),
+                    value(Category::GUD, tag("gud")),
+                    value(Category::GUR, tag("gur")),
+                    value(Category::HIST, tag("hist")),
+                    value(Category::IMER, tag("imer")),
+                    value(Category::ING, tag("ing")),
                 )),
                 alt((
-                    value(Tag::IRO, tag("iro")),
-                    value(Tag::JUR, tag("jur")),
-                    value(Tag::KACH, tag("kach")),
-                    value(Tag::KHAR, tag("khar")),
-                    value(Tag::KHIS, tag("khis")),
-                    value(Tag::KIND, tag("Kind")),
-                    value(Tag::KOLL, tag("koll")),
-                    value(Tag::LANDW, tag("landw")),
-                    value(Tag::LETSCH, tag("letsch")),
-                    value(Tag::MATH, tag("math")),
-                    value(Tag::MED, tag("med")),
-                    value(Tag::MIL, tag("mil")),
-                    value(Tag::MIN, tag("min")),
-                    value(Tag::MINGR, tag("mingr")),
-                    value(Tag::MOCH, tag("moch")),
-                    value(Tag::MORAL, tag("moral")),
-                    value(Tag::MTHIUL, tag("mthiul")),
-                    value(Tag::MUS, tag("mus")),
-                    value(Tag::MYTH, tag("myth")),
-                    value(Tag::NZ, tag("nz")),
-                    value(Tag::OIMER, tag("o-imer")),
+                    value(Category::IRO, tag("iro")),
+                    value(Category::JUR, tag("jur")),
+                    value(Category::KACH, tag("kach")),
+                    value(Category::KHAR, tag("khar")),
+                    value(Category::KHIS, tag("khis")),
+                    value(Category::KIND, tag("Kind")),
+                    value(Category::KOLL, tag("koll")),
+                    value(Category::LANDW, tag("landw")),
+                    value(Category::LETSCH, tag("letsch")),
+                    value(Category::MATH, tag("math")),
+                    value(Category::MED, tag("med")),
+                    value(Category::MIL, tag("mil")),
+                    value(Category::MIN, tag("min")),
+                    value(Category::MINGR, tag("mingr")),
+                    value(Category::MOCH, tag("moch")),
+                    value(Category::MORAL, tag("moral")),
+                    value(Category::MTHIUL, tag("mthiul")),
+                    value(Category::MUS, tag("mus")),
+                    value(Category::MYTH, tag("myth")),
+                    value(Category::NZ, tag("nz")),
+                    value(Category::OIMER, tag("o-imer")),
                 )),
                 alt((
-                    value(Tag::ORATSCH, tag("o-ratsch")),
-                    value(Tag::PHOTOGR, tag("photogr")),
-                    value(Tag::PHYS, tag("phys")),
-                    value(Tag::POET, tag("poet")),
-                    value(Tag::POL, tag("pol")),
-                    value(Tag::PSCH, tag("psch")),
-                    value(Tag::RATSCH, tag("ratsch")),
-                    value(Tag::RL, tag("rl")),
-                    value(Tag::SPO, tag("spo")),
-                    value(Tag::TECH, tag("tech")),
-                    value(Tag::THIAN, tag("thian")),
-                    value(Tag::THUSCH, tag("thusch")),
-                    value(Tag::TSCHAN, tag("tschan")),
-                    value(Tag::TYP, tag("typ")),
-                    value(Tag::UIMER, tag("u-imer")),
-                    value(Tag::UMG, tag("umg")),
-                    value(Tag::UNK, tag("unk")),
-                    value(Tag::URATSCH, tag("u-ratsch")),
-                    value(Tag::VR, tag("vr")),
-                    value(Tag::VULG, tag("vulg")),
-                    value(Tag::ZO, tag("zo")),
+                    value(Category::ORATSCH, tag("o-ratsch")),
+                    value(Category::PHOTOGR, tag("photogr")),
+                    value(Category::PHYS, tag("phys")),
+                    value(Category::POET, tag("poet")),
+                    value(Category::POL, tag("pol")),
+                    value(Category::PSCH, tag("psch")),
+                    value(Category::RATSCH, tag("ratsch")),
+                    value(Category::RL, tag("rl")),
+                    value(Category::SPO, tag("spo")),
+                    value(Category::TECH, tag("tech")),
+                    value(Category::THIAN, tag("thian")),
+                    value(Category::THUSCH, tag("thusch")),
+                    value(Category::TSCHAN, tag("tschan")),
+                    value(Category::TYP, tag("typ")),
+                    value(Category::UIMER, tag("u-imer")),
+                    value(Category::UMG, tag("umg")),
+                    value(Category::UNK, tag("unk")),
+                    value(Category::URATSCH, tag("u-ratsch")),
+                    value(Category::VR, tag("vr")),
+                    value(Category::VULG, tag("vulg")),
+                    value(Category::ZO, tag("zo")),
                 )),
             )),
             char('.'),
