@@ -22,7 +22,7 @@ pub fn tags_whitespace_parser(input: &str) -> IResult<&str, Tags, ErrorTree<&str
 
 /*
 Tags
-    "{" Tag ("," ws Tag)* "}"
+    "(" Tag ("," ws Tag)* ")"
 */
 #[derive(Debug)]
 pub struct Tags(Vec<Tag>);
@@ -32,9 +32,9 @@ pub fn tags_parser(input: &str) -> IResult<&str, Tags, ErrorTree<&str>> {
         "tags",
         map(
             delimited(
-                char('{'),
+                char('('),
                 separated_list1(terminated(char(','), ws_parser), tag_parser),
-                char('}'),
+                char(')'),
             ),
             Tags,
         ),
