@@ -28,17 +28,17 @@ pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
 
 /*
 SentenceDePart
+  WordsDe
   "(" WordsDe ")"
   '"' WordsDe '"'
-  WordsDe
 */
 pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     context(
         "sentence_de_part",
         alt((
+            words_de_parser,
             recognize(delimited(char('('), words_de_parser, char(')'))),
             recognize(delimited(char('"'), words_de_parser, char('"'))),
-            words_de_parser,
         )),
     )(input)
 }
