@@ -1,5 +1,6 @@
 pub mod character;
 pub mod expression;
+pub mod part_of_speech;
 pub mod reference;
 pub mod sentence_de;
 pub mod sentence_ka;
