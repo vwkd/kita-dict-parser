@@ -1,5 +1,5 @@
+use super::category::{categories_parser, Categories};
 use super::character::{integer_parser, ws_parser};
-use super::tag::{categories_parser, Categories};
 use super::term::{term_parser, Term};
 use super::Index;
 use nom::combinator::{map, opt};

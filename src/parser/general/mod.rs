@@ -1,3 +1,4 @@
+pub mod category;
 pub mod character;
 pub mod expression;
 pub mod part_of_speech;
@@ -5,7 +6,6 @@ pub mod reference;
 pub mod sentence_de;
 pub mod sentence_ka;
 pub mod symbols;
-pub mod tag;
 pub mod term;
 pub mod word_de;
 pub mod word_ka;
