@@ -1,5 +1,7 @@
 use super::{
+    category::category_parser,
     character::{integer_parser, ws_parser},
+    part_of_speech::part_of_speech_parser,
     sentence_ka::word_ka_plain_parser,
     word_de::{word_de_big_parser, word_de_small_parser},
     word_ka::word_ka_small_parser,
@@ -34,6 +36,7 @@ SentenceDePart
   WordsDe
   '"' WordsDe '"'
   "(" Explanation ")"
+  "(" Addition ")"
   "(" WordsDe ")"
 */
 pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
@@ -43,6 +46,7 @@ pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<
             words_de_parser,
             recognize(delimited(char('"'), words_de_parser, char('"'))),
             recognize(delimited(char('('), explanation_parser, char(')'))),
+            recognize(delimited(char('('), addition_parser, char(')'))),
             recognize(delimited(char('('), words_de_parser, char(')'))),
         )),
     )(input)
@@ -87,6 +91,34 @@ ExplanationTag
 */
 pub fn explanation_tag_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context("explanation_tag", alt((tag("Abk."), tag("umg."))))(input)
+}
+
+/*
+Addition
+  "a." ws AdditionTag
+*/
+pub fn addition_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "addition",
+        recognize(separated_pair(tag("a."), ws_parser, addition_tag_parser)),
+    )(input)
+}
+
+/*
+AdditionTag
+  PartOfSpeech
+  Category
+  WordsDe
+*/
+pub fn addition_tag_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "addition_tag",
+        alt((
+            recognize(part_of_speech_parser),
+            recognize(category_parser),
+            recognize(words_de_parser),
+        )),
+    )(input)
 }
 
 /*
