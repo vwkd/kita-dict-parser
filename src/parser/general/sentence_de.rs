@@ -1,5 +1,6 @@
 use super::{
     character::{integer_parser, ws_parser},
+    sentence_ka::word_ka_plain_parser,
     word_de::{word_de_big_parser, word_de_small_parser},
     word_ka::word_ka_small_parser,
 };
@@ -7,10 +8,10 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
-    combinator::{not, recognize},
+    combinator::{not, opt, recognize},
     error::{context, VerboseError},
     multi::separated_list1,
-    sequence::{delimited, pair, separated_pair, terminated, tuple},
+    sequence::{delimited, pair, preceded, separated_pair, terminated, tuple},
     IResult,
 };
 
@@ -28,18 +29,46 @@ pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>
 /*
 SentenceDePart
   WordsDe
-  "(" WordsDe ")"
   '"' WordsDe '"'
+  "(" Explanation ")"
+  "(" WordsDe ")"
 */
 pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "sentence_de_part",
         alt((
             words_de_parser,
-            recognize(delimited(char('('), words_de_parser, char(')'))),
             recognize(delimited(char('"'), words_de_parser, char('"'))),
+            recognize(delimited(char('('), explanation_parser, char(')'))),
+            recognize(delimited(char('('), words_de_parser, char(')'))),
         )),
     )(input)
+}
+
+/*
+Explanation
+  ExplanationTag ws "für" (ws WordKaPlain)+ "!"?
+*/
+pub fn explanation_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "explanation",
+        recognize(preceded(
+            tuple((explanation_tag_parser, ws_parser, tag("für"), ws_parser)),
+            terminated(
+                separated_list1(ws_parser, word_ka_plain_parser),
+                opt(char('!')),
+            ),
+        )),
+    )(input)
+}
+
+/*
+ExplanationTag
+  "Abk."
+  "umg."
+*/
+pub fn explanation_tag_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context("explanation_tag", alt((tag("Abk."), tag("umg."))))(input)
 }
 
 /*
