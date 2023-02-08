@@ -203,6 +203,7 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
 /*
 ShorthandOtherDe
   "ca."
+  "d.h."
   "durch-ea."
   "kaukas."
   "NG"
@@ -217,6 +218,7 @@ pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, VerboseErro
         "shorthand_other_de",
         alt((
             tag("ca."),
+            tag("d.h."),
             tag("durch-ea."),
             tag("kaukas."),
             tag("NG"),
