@@ -75,6 +75,7 @@ pub fn separator_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> 
 WordDe
   Integer
   ShorthandDe
+  ShorthandOtherDe
   WordDeSmall "!"
   WordDeSmall "-" WordDeSmall
   WordDeSmall "-"
@@ -95,6 +96,7 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
             // beware: negative lookahead for ".", otherwise consumes part of higher-up UsageItem which then fails
             recognize(terminated(integer_parser, not(char('.')))),
             shorthand_de_parser,
+            shorthand_other_de_parser,
             recognize(pair(word_de_small_parser, char('!'))),
             recognize(tuple((
                 word_de_small_parser,
@@ -132,7 +134,19 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
     )(input)
 }
 
-// todo: add missing, e.g. `z.B.`
+/*
+ShorthandOtherDe
+  "durch-ea."
+  "kaukas."
+  "z.B."
+*/
+pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, ErrorTree<&str>> {
+    context(
+        "shorthand_other_de",
+        alt((tag("durch-ea."), tag("kaukas."), tag("z.B."))),
+    )(input)
+}
+
 /*
 ShorthandDe
   "b."
