@@ -17,12 +17,15 @@ use nom::{
 
 /*
 SentenceDe
-  SentenceDePart (ws SentenceDePart)*
+  SentenceDePart (SentenceDeSeparator SentenceDePart)*
 */
 pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "sentence_de",
-        recognize(separated_list1(ws_parser, sentence_de_part_parser)),
+        recognize(separated_list1(
+            sentence_de_separator_parser,
+            sentence_de_part_parser,
+        )),
     )(input)
 }
 
@@ -41,6 +44,21 @@ pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<
             recognize(delimited(char('"'), words_de_parser, char('"'))),
             recognize(delimited(char('('), explanation_parser, char(')'))),
             recognize(delimited(char('('), words_de_parser, char(')'))),
+        )),
+    )(input)
+}
+
+/*
+SentenceDeSeparator
+  ws
+  "," ws
+*/
+pub fn sentence_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "sentence_de_separator",
+        alt((
+            recognize(ws_parser),
+            recognize(terminated(char(','), ws_parser)),
         )),
     )(input)
 }
@@ -73,24 +91,24 @@ pub fn explanation_tag_parser(input: &str) -> IResult<&str, &str, VerboseError<&
 
 /*
 WordsDe
-  WordDe (SeparatorDe WordDe)*
+  WordDe (WordDeSeparator WordDe)*
 */
 pub fn words_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "words_de",
-        recognize(separated_list1(separator_de_parser, word_de_parser)),
+        recognize(separated_list1(word_de_separator_parser, word_de_parser)),
     )(input)
 }
 
 /*
-SeparatorDe
+WordDeSeparator
   ws
   "," ws
   "/"
 */
-pub fn separator_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+pub fn word_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
-        "separator_de",
+        "word_de_separator",
         alt((
             recognize(ws_parser),
             recognize(terminated(char(','), ws_parser)),
