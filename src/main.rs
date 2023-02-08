@@ -5,12 +5,12 @@ use import::{load_data, DictData};
 use parser::general;
 use parser::verb;
 
-const NEXT_PAGE: &str = "1/39";
-
 fn main() {
-    println!("Parsing dict until page {}...", NEXT_PAGE);
+    let next_page = std::env::var("NEXT_PAGE").unwrap_or("1/39".to_owned());
 
-    let DictData(lines_noverbs, lines_verbs) = load_data(NEXT_PAGE).expect("Error loading data");
+    println!("Parsing dict until page {}...", next_page);
+
+    let DictData(lines_noverbs, lines_verbs) = load_data(&next_page).expect("Error loading data");
 
     let noverbs_total = lines_noverbs.len() as f32;
     let mut noverbs_success = 0.;
