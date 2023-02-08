@@ -3,7 +3,7 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
-    combinator::{map, recognize},
+    combinator::{map, opt, recognize},
     error::{context, VerboseError},
     sequence::{delimited, separated_pair, terminated, tuple},
     IResult,
@@ -86,9 +86,7 @@ pub fn word_ka_plain_parser(input: &str) -> IResult<&str, &str, VerboseError<&st
 
 /*
 WordKaRoot
-  WordKaSmall RootKa WordKaSmall
-  WordKaSmall RootKa
-  RootKa WordKaSmall
+  WordKaSmall? RootKa WordKaSmall?
 */
 #[derive(Debug)]
 /// srtart, root, end
@@ -97,20 +95,14 @@ pub struct WordKaRoot<'a>(Option<Value<'a>>, Value<'a>, Option<Value<'a>>);
 pub fn word_ka_root_parser(input: &str) -> IResult<&str, WordKaRoot, VerboseError<&str>> {
     context(
         "wort_ka_root",
-        alt((
-            map(
-                tuple((word_ka_small_parser, root_ka_parser, word_ka_small_parser)),
-                |(start, root, end)| WordKaRoot(Some(start), root, Some(end)),
-            ),
-            map(
-                tuple((word_ka_small_parser, root_ka_parser)),
-                |(start, root)| WordKaRoot(Some(start), root, None),
-            ),
-            map(
-                tuple((root_ka_parser, word_ka_small_parser)),
-                |(root, end)| WordKaRoot(None, root, Some(end)),
-            ),
-        )),
+        map(
+            tuple((
+                opt(word_ka_small_parser),
+                root_ka_parser,
+                opt(word_ka_small_parser),
+            )),
+            |(start, root, end)| WordKaRoot(start, root, end),
+        ),
     )(input)
 }
 
