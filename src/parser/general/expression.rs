@@ -17,15 +17,18 @@ use super::sentence_de::sentence_de_parser;
 use super::symbols::{temporality_parser, Temporality};
 use super::Index;
 
+// todo: either one for all or one for every, for each of speech, categories and temporality, 3^2 = 9 possibilities
 /*
 Expression
     Usages
     UsageTagged
+    UsageCategories
 */
 #[derive(Debug)]
 pub enum Expression<'a> {
     Usages(Usages<'a>),
     UsageTagged(UsageTagged<'a>),
+    UsageCategories(UsageCategories<'a>),
 }
 
 pub fn expression_parser(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
@@ -34,6 +37,7 @@ pub fn expression_parser(input: &str) -> IResult<&str, Expression, VerboseError<
         alt((
             map(usages_parser, Expression::Usages),
             map(usage_tagged_parser, Expression::UsageTagged),
+            map(usage_categories_parser, Expression::UsageCategories),
         )),
     )(input)
 }
@@ -167,6 +171,40 @@ pub fn usage_item_parser(input: &str) -> IResult<&str, UsageItem, VerboseError<&
             ),
             |(index, usage)| UsageItem(usage, index),
         ),
+    )(input)
+}
+
+// todo: separate tags, allow categories (and temporality?) on every definition
+/*
+UsageCategories
+    DefinitionCategories (";" ws DefinitionCategories)*
+*/
+#[derive(Debug)]
+pub struct UsageCategories<'a>(Vec<DefinitionCategories<'a>>);
+
+pub fn usage_categories_parser(
+    input: &str,
+) -> IResult<&str, UsageCategories, VerboseError<&str>> {
+    context(
+        "usage_categories",
+        map(
+            separated_list1(terminated(char(';'), ws_parser), definition_categories_parser),
+            UsageCategories,
+        ),
+    )(input)
+}
+
+/*
+DefinitionCategories
+    (Categories ws)? SentenceDe
+*/
+#[derive(Debug)]
+pub struct DefinitionCategories<'a>(Option<Categories>, &'a str);
+
+pub fn definition_categories_parser(input: &str) -> IResult<&str, DefinitionCategories, VerboseError<&str>> {
+    context(
+        "definition_categories",
+        map(pair(opt(terminated(categories_parser, ws_parser)), sentence_de_parser), |(categories, sentence)| DefinitionCategories(categories, sentence)),
     )(input)
 }
 
