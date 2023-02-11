@@ -151,6 +151,7 @@ pub fn word_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseError
 
 /*
 WordDe
+  DateDe
   Integer
   ShorthandDe
   ShorthandOtherDe
@@ -176,6 +177,7 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "word_de",
         alt((
+            recognize(date_de_parser),
             // beware: negative lookahead for ".", otherwise consumes part of higher-up UsageItem which then fails
             recognize(terminated(integer_parser, not(char('.')))),
             shorthand_de_parser,
@@ -377,6 +379,57 @@ pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str
                 tag("wg."),
                 tag("zs."),
             )),
+        )),
+    )(input)
+}
+
+// note: don't validate day
+/*
+DateDe
+  Integer "." "ws" MonthDe
+*/
+pub fn date_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "date_de",
+        recognize(separated_pair(
+            terminated(integer_parser, char('.')),
+            ws_parser,
+            month_de_parser,
+        )),
+    )(input)
+}
+
+/*
+MonthDe
+  "Januar"
+  "Februar"
+  "März"
+  "April"
+  "Mai"
+  "Juni"
+  "Juli"
+  "August"
+  "Sept."
+  "Okt."
+  "Nov."
+  "Dez."
+*/
+pub fn month_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "month_de",
+        alt((
+            tag("Januar"),
+            tag("Februar"),
+            tag("März"),
+            tag("April"),
+            tag("Mai"),
+            tag("Juni"),
+            tag("Juli"),
+            tag("August"),
+            tag("Sept."),
+            tag("Okt."),
+            tag("Nov."),
+            tag("Dez."),
         )),
     )(input)
 }
