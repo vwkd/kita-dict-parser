@@ -101,6 +101,7 @@ WordDe
   WordDeSmall "!"
   WordDeSmall "-" WordDeSmall
   WordDeSmall "-"
+  WordDeSmall ":"
   WordDeSmall
   "-" WordDeSmall
   "(" WordDeSmall ")" WordDeSmall "-"
@@ -141,6 +142,7 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
                     word_de_small_parser,
                 ))),
                 recognize(tuple((word_de_small_parser, char('-')))),
+                recognize(tuple((word_de_small_parser, char(':')))),
                 word_de_small_parser,
                 recognize(pair(char('-'), word_de_small_parser)),
                 recognize(tuple((
@@ -167,6 +169,8 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
                 ))),
                 recognize(pair(word_de_big_parser, tag("..."))),
                 word_de_big_parser,
+            )),
+            alt((
                 recognize(tuple((
                     char('('),
                     word_de_big_parser,
@@ -174,8 +178,6 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
                     char(')'),
                     word_de_big_parser,
                 ))),
-            )),
-            alt((
                 recognize(tuple((word_ka_small_parser, char('-'), word_de_big_parser))),
                 recognize(pair(word_ka_small_parser, char('!'))),
                 word_ka_small_parser,
@@ -189,6 +191,7 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
 ShorthandCombinationDe
   "a." ws Category
   "a." ws PartOfSpeech
+  "imS" ":"
 */
 pub fn shorthand_combination_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
@@ -196,6 +199,7 @@ pub fn shorthand_combination_de_parser(input: &str) -> IResult<&str, &str, Verbo
         alt((
             recognize(separated_pair(tag("a."), ws_parser, category_parser)),
             recognize(separated_pair(tag("a."), ws_parser, part_of_speech_parser)),
+            recognize(tuple((tag("imS"), char(':')))),
         )),
     )(input)
 }
