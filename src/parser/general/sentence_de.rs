@@ -267,115 +267,162 @@ pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, VerboseErro
 
 /*
 ShorthandDe
+  "a."
+  "Abk."
+  "ag."
   "b."
-  "e."
-  "ea."
+  "Bed."
+  "d.O."
+  "do."
+  "DOZ"
   "e-e"
   "e-m"
   "e-n"
   "e-r"
   "e-s"
+  "e."
+  "ea."
+  "ehm."
   "et."
+  "Fn."
+  "FR"
   "fr."
   "g."
+  "gebr."
+  "Ggs."
+  "i.O."
+  "imS"
+  "intr."
+  "IOZ"
+  "Iter."
   "j-d"
   "j-m"
   "j-n"
   "j-s"
+  "L."
   "l."
-  "m."
   "m-e"
   "m-m"
   "m-n"
   "m-r"
   "m-s"
+  "m."
+  "m. Vn."
+  "mst"
+  "neg."
+  "NG"
   "ng."
+  "NV"
+  "Obj."
+  "od."
+  "OG"
   "og."
+  "OR"
+  "OV"
+  "OVZ"
+  "P."
+  "Pkt."
+  "PR"
+  "s."
+  "SG"
+  "sg."
+  "sn"
+  "Subj."
+  "SupV"
+  "SupVZ"
+  "SV"
+  "T."
   "u."
   "u. zw."
   "v."
+  "Vn."
+  "w. Vn."
+  "WG"
   "wg."
   "zs."
-
-  // "a."
-  // "Abk."
-  // "ag."
-  // "Bed."
-  // "do."
-  // "d.O."
-  // "DOZ"
-  // "ehm."
-  // "Fn."
-  // "FR"
-  // "gebr."
-  // "Ggs."
-  // "imS"
-  // "intr."
-  // "i.O."
-  // "IOZ"
-  // "Iter."
-  // "L."
-  // "mst"
-  // "m. Vn."
-  // "neg."
-  // "NG"
-  // "NV"
-  // "Obj."
-  // "od."
-  // "OG"
-  // "OR"
-  // "OV"
-  // "OVZ"
-  // "P."
-  // "Pkt."
-  // "PR"
-  // "s."
-  // "sg."
-  // "SG"
-  // "sn"
-  // "Subj."
-  // "SupV"
-  // "SupVZ"
-  // "SV"
-  // "T."
-  // "Vn."
-  // "WG"
-  // "w. Vn."
 */
 pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "shorthand_de",
         alt((
             alt((
+                tag("a."),
+                tag("Abk."),
+                tag("ag."),
                 tag("b."),
-                tag("e."),
-                tag("ea."),
+                tag("Bed."),
+                tag("d.O."),
+                tag("do."),
+                tag("DOZ"),
                 tag("e-e"),
                 tag("e-m"),
                 tag("e-n"),
                 tag("e-r"),
                 tag("e-s"),
+                tag("e."),
+                tag("ea."),
+                tag("ehm."),
                 tag("et."),
+                tag("Fn."),
+                tag("FR"),
                 tag("fr."),
+            )),
+            alt((
                 tag("g."),
+                tag("gebr."),
+                tag("Ggs."),
+                tag("i.O."),
+                tag("imS"),
+                tag("intr."),
+                tag("IOZ"),
+                tag("Iter."),
                 tag("j-d"),
                 tag("j-m"),
                 tag("j-n"),
                 tag("j-s"),
+                tag("L."),
                 tag("l."),
-                tag("m."),
                 tag("m-e"),
                 tag("m-m"),
-            )),
-            alt((
                 tag("m-n"),
                 tag("m-r"),
                 tag("m-s"),
+                tag("m."),
+            )),
+            alt((
+                tag("m. Vn."),
+                tag("mst"),
+                tag("neg."),
+                tag("NG"),
                 tag("ng."),
+                tag("NV"),
+                tag("Obj."),
+                tag("od."),
+                tag("OG"),
                 tag("og."),
+                tag("OR"),
+                tag("OV"),
+                tag("OVZ"),
+                tag("P."),
+                tag("Pkt."),
+                tag("PR"),
+                tag("s."),
+                tag("SG"),
+                tag("sg."),
+                tag("sn"),
+            )),
+            alt((
+                tag("Subj."),
+                tag("SupV"),
+                tag("SupVZ"),
+                tag("SV"),
+                tag("T."),
                 tag("u."),
-                recognize(separated_pair(tag("u."), ws_parser, tag("zw."))),
+                tag("u. zw."),
                 tag("v."),
+                tag("Vn."),
+                tag("w. Vn."),
+                tag("WG"),
                 tag("wg."),
                 tag("zs."),
             )),
