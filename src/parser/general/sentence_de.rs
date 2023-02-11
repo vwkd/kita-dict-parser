@@ -2,7 +2,6 @@ use super::{
     category::category_parser,
     character::{integer_parser, ws_parser},
     part_of_speech::part_of_speech_parser,
-    sentence_ka::word_ka_plain_parser,
     word_de::{word_de_big_parser, word_de_small_parser},
     word_ka::word_ka_small_parser,
 };
@@ -10,10 +9,10 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::char,
-    combinator::{not, opt, recognize},
+    combinator::{not, recognize},
     error::{context, VerboseError},
     multi::separated_list1,
-    sequence::{delimited, pair, preceded, separated_pair, terminated, tuple},
+    sequence::{delimited, pair, separated_pair, terminated, tuple},
     IResult,
 };
 
@@ -35,8 +34,6 @@ pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>
 SentenceDePart
   WordsDe
   '"' WordsDe '"'
-  "(" Explanation ")"
-  "(" Addition ")"
   "(" WordsDe ")"
 */
 pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
@@ -45,8 +42,6 @@ pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<
         alt((
             words_de_parser,
             recognize(delimited(char('"'), words_de_parser, char('"'))),
-            recognize(delimited(char('('), explanation_parser, char(')'))),
-            recognize(delimited(char('('), addition_parser, char(')'))),
             recognize(delimited(char('('), words_de_parser, char(')'))),
         )),
     )(input)
@@ -63,60 +58,6 @@ pub fn sentence_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseE
         alt((
             recognize(ws_parser),
             recognize(terminated(char(','), ws_parser)),
-        )),
-    )(input)
-}
-
-/*
-Explanation
-  ExplanationTag ws "für" (ws WordKaPlain)+ "!"?
-*/
-pub fn explanation_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "explanation",
-        recognize(preceded(
-            tuple((explanation_tag_parser, ws_parser, tag("für"), ws_parser)),
-            terminated(
-                separated_list1(ws_parser, word_ka_plain_parser),
-                opt(char('!')),
-            ),
-        )),
-    )(input)
-}
-
-/*
-ExplanationTag
-  "Abk."
-  "umg."
-*/
-pub fn explanation_tag_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context("explanation_tag", alt((tag("Abk."), tag("umg."))))(input)
-}
-
-/*
-Addition
-  "a." ws AdditionTag
-*/
-pub fn addition_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "addition",
-        recognize(separated_pair(tag("a."), ws_parser, addition_tag_parser)),
-    )(input)
-}
-
-/*
-AdditionTag
-  PartOfSpeech
-  Category
-  WordsDe
-*/
-pub fn addition_tag_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "addition_tag",
-        alt((
-            recognize(part_of_speech_parser),
-            recognize(category_parser),
-            recognize(words_de_parser),
         )),
     )(input)
 }
@@ -153,6 +94,7 @@ pub fn word_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseError
 WordDe
   DateDe
   Integer
+  ShorthandCombinationDe
   ShorthandDe
   ShorthandOtherDe
   WordDeSmall "(" WordDeSmall ")"
@@ -171,65 +113,89 @@ WordDe
   WordDeBig
   "(" WordDeBig "-" ")" WordDeBig
   WordKaSmall "-" WordDeBig
+  WordKaSmall "!"
+  WordKaSmall
   // ...
 */
 pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
         "word_de",
         alt((
-            recognize(date_de_parser),
-            // beware: negative lookahead for ".", otherwise consumes part of higher-up UsageItem which then fails
-            recognize(terminated(integer_parser, not(char('.')))),
-            shorthand_de_parser,
-            shorthand_other_de_parser,
-            recognize(tuple((
+            alt((
+                recognize(date_de_parser),
+                // beware: negative lookahead for ".", otherwise consumes part of higher-up UsageItem which then fails
+                recognize(terminated(integer_parser, not(char('.')))),
+                shorthand_combination_de_parser,
+                shorthand_de_parser,
+                shorthand_other_de_parser,
+                recognize(tuple((
+                    word_de_small_parser,
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
+                ))),
+                recognize(pair(word_de_small_parser, char('!'))),
+                recognize(tuple((
+                    word_de_small_parser,
+                    char('-'),
+                    word_de_small_parser,
+                ))),
+                recognize(tuple((word_de_small_parser, char('-')))),
                 word_de_small_parser,
-                char('('),
-                word_de_small_parser,
-                char(')'),
-            ))),
-            recognize(pair(word_de_small_parser, char('!'))),
-            recognize(tuple((
-                word_de_small_parser,
-                char('-'),
-                word_de_small_parser,
-            ))),
-            recognize(tuple((word_de_small_parser, char('-')))),
-            word_de_small_parser,
-            recognize(pair(char('-'), word_de_small_parser)),
-            recognize(tuple((
-                char('('),
-                word_de_small_parser,
-                char(')'),
-                word_de_small_parser,
-                char('-'),
-            ))),
-            recognize(tuple((
-                char('('),
-                word_de_small_parser,
-                char(')'),
-                word_de_small_parser,
-            ))),
-            recognize(tuple((word_de_big_parser, char('-'), word_de_big_parser))),
-            recognize(tuple((word_de_big_parser, char('-'), word_de_small_parser))),
-            recognize(pair(word_de_big_parser, char('-'))),
-            recognize(tuple((
+                recognize(pair(char('-'), word_de_small_parser)),
+                recognize(tuple((
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
+                    word_de_small_parser,
+                    char('-'),
+                ))),
+                recognize(tuple((
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
+                    word_de_small_parser,
+                ))),
+                recognize(tuple((word_de_big_parser, char('-'), word_de_big_parser))),
+                recognize(tuple((word_de_big_parser, char('-'), word_de_small_parser))),
+                recognize(pair(word_de_big_parser, char('-'))),
+                recognize(tuple((
+                    word_de_big_parser,
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
+                ))),
+                recognize(pair(word_de_big_parser, tag("..."))),
                 word_de_big_parser,
-                char('('),
-                word_de_small_parser,
-                char(')'),
-            ))),
-            recognize(pair(word_de_big_parser, tag("..."))),
-            word_de_big_parser,
-            recognize(tuple((
-                char('('),
-                word_de_big_parser,
-                char('-'),
-                char(')'),
-                word_de_big_parser,
-            ))),
-            recognize(tuple((word_ka_small_parser, char('-'), word_de_big_parser))),
+                recognize(tuple((
+                    char('('),
+                    word_de_big_parser,
+                    char('-'),
+                    char(')'),
+                    word_de_big_parser,
+                ))),
+            )),
+            alt((
+                recognize(tuple((word_ka_small_parser, char('-'), word_de_big_parser))),
+                recognize(pair(word_ka_small_parser, char('!'))),
+                word_ka_small_parser,
+            )),
             // ...
+        )),
+    )(input)
+}
+
+/*
+ShorthandCombinationDe
+  "a." ws Category
+  "a." ws PartOfSpeech
+*/
+pub fn shorthand_combination_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "shorthand_combination_de",
+        alt((
+            recognize(separated_pair(tag("a."), ws_parser, category_parser)),
+            recognize(separated_pair(tag("a."), ws_parser, part_of_speech_parser)),
         )),
     )(input)
 }
@@ -244,6 +210,7 @@ ShorthandOtherDe
   "od."
   "OG"
   "SG"
+  "umg."
   "WG"
   "z.B."
 */
@@ -259,6 +226,7 @@ pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, VerboseErro
             tag("od."),
             tag("OG"),
             tag("SG"),
+            tag("umg."),
             tag("WG"),
             tag("z.B."),
         )),
