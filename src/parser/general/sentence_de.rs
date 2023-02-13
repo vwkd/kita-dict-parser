@@ -132,15 +132,19 @@ WordDe
   ShorthandCombinationDe
   ShorthandDe
   ShorthandOtherDe
+  WordDeSmall "(" WordDeSmall ")" WordDeSmall
   WordDeSmall "(" WordDeSmall ")"
   WordDeSmall "!"
+  WordDeSmall "-" WordDeSmall "(" WordDeSmall ")"
   WordDeSmall "-" WordDeSmall
   WordDeSmall "-"
   WordDeSmall ":"
   WordDeSmall
+  "-" WordDeSmall "(" WordDeSmall ")"
   "-" WordDeSmall
   "(" WordDeSmall ")" WordDeSmall "-"
   "(" WordDeSmall ")" WordDeSmall
+  "(" WordDeSmall "-" ")" WordDeSmall
   WordDeBig "-" WordDeBig
   WordDeBig "-" WordDeSmall
   WordDeBig "-"
@@ -169,16 +173,40 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
                     char('('),
                     word_de_small_parser,
                     char(')'),
+                    word_de_small_parser,
+                ))),
+                recognize(tuple((
+                    word_de_small_parser,
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
                 ))),
                 recognize(pair(word_de_small_parser, char('!'))),
                 recognize(tuple((
                     word_de_small_parser,
                     char('-'),
                     word_de_small_parser,
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
+                ))),
+                recognize(tuple((
+                    word_de_small_parser,
+                    char('-'),
+                    word_de_small_parser,
                 ))),
                 recognize(tuple((word_de_small_parser, char('-')))),
+            )),
+            alt((
                 recognize(tuple((word_de_small_parser, char(':')))),
                 word_de_small_parser,
+                recognize(tuple((
+                    char('-'),
+                    word_de_small_parser,
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
+                ))),
                 recognize(pair(char('-'), word_de_small_parser)),
                 recognize(tuple((
                     char('('),
@@ -190,6 +218,13 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
                 recognize(tuple((
                     char('('),
                     word_de_small_parser,
+                    char(')'),
+                    word_de_small_parser,
+                ))),
+                recognize(tuple((
+                    char('('),
+                    word_de_small_parser,
+                    char('-'),
                     char(')'),
                     word_de_small_parser,
                 ))),
