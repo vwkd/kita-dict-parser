@@ -206,15 +206,19 @@ pub fn shorthand_combination_de_parser(input: &str) -> IResult<&str, &str, Verbo
 
 /*
 ShorthandOtherDe
+  "bzw."
   "ca."
   "d.h."
   "durch-ea."
+  "georg."
+  "griech."
   "kaukas."
   "NG"
   "od."
   "OG"
   "SG"
   "umg."
+  "usw."
   "WG"
   "z.B."
 */
@@ -222,15 +226,19 @@ pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, VerboseErro
     context(
         "shorthand_other_de",
         alt((
+            tag("bzw."),
             tag("ca."),
             tag("d.h."),
             tag("durch-ea."),
+            tag("georg."),
+            tag("griech."),
             tag("kaukas."),
             tag("NG"),
             tag("od."),
             tag("OG"),
             tag("SG"),
             tag("umg."),
+            tag("usw."),
             tag("WG"),
             tag("z.B."),
         )),
