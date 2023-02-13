@@ -129,6 +129,7 @@ pub fn word_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseError
 WordDe
   DateDe
   Integer
+  ShorthandVariableDe
   ShorthandCombinationDe
   ShorthandDe
   ShorthandOtherDe
@@ -143,6 +144,7 @@ WordDe
   "-" WordDeSmall "(" WordDeSmall ")"
   "-" WordDeSmall
   "(" WordDeSmall ")" WordDeSmall "-"
+  "(" WordDeSmall ")" WordDeSmall "(" WordDeSmall ")"
   "(" WordDeSmall ")" WordDeSmall
   "(" WordDeSmall "-" ")" WordDeSmall
   WordDeBig "-" WordDeBig
@@ -165,6 +167,7 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
                 recognize(date_de_parser),
                 // beware: negative lookahead for ".", otherwise consumes part of higher-up UsageItem which then fails
                 recognize(terminated(integer_parser, not(char('.')))),
+                shorthand_variable_de_parser,
                 shorthand_combination_de_parser,
                 shorthand_de_parser,
                 shorthand_other_de_parser,
@@ -220,6 +223,15 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
                     word_de_small_parser,
                     char(')'),
                     word_de_small_parser,
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
+                ))),
+                recognize(tuple((
+                    char('('),
+                    word_de_small_parser,
+                    char(')'),
+                    word_de_small_parser,
                 ))),
                 recognize(tuple((
                     char('('),
@@ -254,6 +266,21 @@ pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
             )),
             // ...
         )),
+    )(input)
+}
+
+/*
+ShorthandVariableDe
+  "zs." "-" WordDeSmall
+*/
+pub fn shorthand_variable_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "shorthand_variable_de",
+        alt((recognize(separated_pair(
+            tag("zs."),
+            char('-'),
+            word_de_small_parser,
+        )),)),
     )(input)
 }
 
