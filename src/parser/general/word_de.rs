@@ -1,18 +1,24 @@
 use nom::{
     bytes::complete::take_while1,
-    character::complete::satisfy,
-    combinator::recognize,
+    character::complete::{char, satisfy},
+    combinator::{opt, recognize},
     error::{context, VerboseError},
-    sequence::tuple,
+    sequence::{pair, tuple},
     IResult,
 };
 
 /*
 WordDeSmall
-    CharDeSmall+
+    CharDeSmall+ ("'" "s"?)?
 */
 pub fn word_de_small_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context("word_de_small", take_while1(is_char_de_small))(input)
+    context(
+        "word_de_small",
+        recognize(pair(
+            take_while1(is_char_de_small),
+            opt(pair(char('\''), opt(char('s')))),
+        )),
+    )(input)
 }
 
 // note: require at least two letters
