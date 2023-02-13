@@ -5,33 +5,9 @@ use nom::{
     character::complete::char,
     combinator::{map, opt, recognize},
     error::{context, VerboseError},
-    sequence::{delimited, separated_pair, terminated, tuple},
+    sequence::{delimited, separated_pair, tuple},
     IResult,
 };
-
-/*
-HeadwordKa
-  WordKa "!"
-  WordKa
-*/
-#[derive(Debug)]
-pub enum HeadwordKa<'a> {
-    Normal(WordKa<'a>),
-    Exclamation(WordKa<'a>),
-}
-
-pub fn headword_ka_parser(input: &str) -> IResult<&str, HeadwordKa, VerboseError<&str>> {
-    context(
-        "headword_ka",
-        alt((
-            map(
-                terminated(word_ka_parser, char('!')),
-                HeadwordKa::Exclamation,
-            ),
-            map(word_ka_parser, HeadwordKa::Normal),
-        )),
-    )(input)
-}
 
 /*
 WordKa
