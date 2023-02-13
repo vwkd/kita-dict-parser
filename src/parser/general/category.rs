@@ -40,6 +40,8 @@ Category
     biol.
     bot.
     chem.
+    // todo: remove, fix print error in source
+    chews.
     chew.
     desp.
     dschaw.
@@ -175,7 +177,8 @@ pub fn category_parser(input: &str) -> IResult<&str, Category, VerboseError<&str
                     value(Category::BIOL, tag("biol")),
                     value(Category::BOT, tag("bot")),
                     value(Category::CHEM, tag("chem")),
-                    value(Category::CHEW, tag("chew")),
+                    // todo: remove, fix print error in source
+                    value(Category::CHEW, alt((tag("chews"), tag("chew")))),
                     value(Category::DESP, tag("desp")),
                     value(Category::DSCHAW, tag("dschaw")),
                     value(Category::ELEKTR, tag("elektr")),
