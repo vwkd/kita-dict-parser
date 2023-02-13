@@ -19,7 +19,7 @@ fn main() {
 
     for (index, line) in lines_noverbs.into_iter().enumerate() {
         // todo: parse skipped lines
-        if line.contains(['|', '~', '=']) {
+        if line.contains(['|', '~', '=']) || line.contains("...") {
             continue;
         }
 
