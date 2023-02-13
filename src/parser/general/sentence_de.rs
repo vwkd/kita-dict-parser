@@ -304,8 +304,8 @@ ShorthandDe
   "SupVZ"
   "SV"
   "T."
-  "u."
   "u. zw."
+  "u."
   "v."
   "Vn."
   "w. Vn."
@@ -389,8 +389,8 @@ pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str
                 tag("SupVZ"),
                 tag("SV"),
                 tag("T."),
-                tag("u."),
                 tag("u. zw."),
+                tag("u."),
                 tag("v."),
                 tag("Vn."),
                 tag("w. Vn."),
