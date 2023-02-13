@@ -34,7 +34,7 @@ pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>
 SentenceDePart
   WordsDe
   '"' WordsDe '"'
-  "(" WordsDe ")"
+  "(" WordsDeParentheses ")"
 */
 pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
     context(
@@ -42,7 +42,7 @@ pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<
         alt((
             words_de_parser,
             recognize(delimited(char('"'), words_de_parser, char('"'))),
-            recognize(delimited(char('('), words_de_parser, char(')'))),
+            recognize(delimited(char('('), words_de_parentheses_parser, char(')'))),
         )),
     )(input)
 }
@@ -58,6 +58,41 @@ pub fn sentence_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseE
         alt((
             recognize(ws_parser),
             recognize(terminated(char(','), ws_parser)),
+        )),
+    )(input)
+}
+
+/*
+WordsDeParentheses
+  WordDe (WordDeParenthesesSeparator WordDe)*
+*/
+pub fn words_de_parentheses_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "words_de_parentheses",
+        recognize(separated_list1(
+            word_de_parentheses_separator_parser,
+            word_de_parser,
+        )),
+    )(input)
+}
+
+/*
+WordDeParenthesesSeparator
+  ws
+  "," ws
+  ";" ws
+  "/"
+*/
+pub fn word_de_parentheses_separator_parser(
+    input: &str,
+) -> IResult<&str, &str, VerboseError<&str>> {
+    context(
+        "word_de_parentheses_separator",
+        alt((
+            recognize(ws_parser),
+            recognize(terminated(char(','), ws_parser)),
+            recognize(terminated(char(';'), ws_parser)),
+            recognize(char('/')),
         )),
     )(input)
 }
