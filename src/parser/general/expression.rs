@@ -11,7 +11,7 @@ use crate::parser::utils::separated_list2;
 use super::super::utils::KitaError;
 use super::category::{categories_parser, Categories};
 use super::character::{integer_parser, ws_parser};
-use super::part_of_speech::{part_of_speech_tag_parser, PartOfSpeechTag};
+use super::part_of_speech::{part_of_speech_parser, PartOfSpeech};
 use super::reference::{reference_parser, Reference};
 use super::sentence_de::sentence_de_parser;
 use super::symbols::{temporality_parser, Temporality};
@@ -124,11 +124,11 @@ pub fn usage_tagged_parser(input: &str) -> IResult<&str, UsageTagged, VerboseErr
 
 /*
 Tag
-    (PartOfSpeechTag ws)? (Categories ws)? (Temporality ws)?
+    (PartOfSpeech ws)? (Categories ws)? (Temporality ws)?
 */
 #[derive(Debug)]
 pub struct Tag(
-    Option<PartOfSpeechTag>,
+    Option<PartOfSpeech>,
     Option<Categories>,
     Option<Temporality>,
 );
@@ -138,7 +138,7 @@ pub fn tag_parser(input: &str) -> IResult<&str, Tag, VerboseError<&str>> {
         "tag",
         map(
             tuple((
-                opt(terminated(part_of_speech_tag_parser, ws_parser)),
+                opt(terminated(part_of_speech_parser, ws_parser)),
                 opt(terminated(categories_parser, ws_parser)),
                 opt(terminated(temporality_parser, ws_parser)),
             )),
