@@ -40,12 +40,12 @@ pub fn expression_parser(input: &str) -> IResult<&str, Expression, VerboseError<
 
 /*
 Usages
-    Tag UsageItem(1) ws UsageItem(2) (ws UsageItem(i))_i=3*
+    (TagUsageItem ws)? UsageItem(1) ws UsageItem(2) (ws UsageItem(i))_i=3*
     UsageItemTagged(1) ws UsageItemTagged(2) (ws UsageItemTagged(i))_i=3*
 */
 #[derive(Debug)]
 pub enum Usages<'a> {
-    Common(Tag, Vec<UsageItem<'a>>),
+    Common(TagUsageItem, Vec<UsageItem<'a>>),
     Individual(Vec<UsageItemTagged<'a>>),
 }
 
@@ -54,8 +54,8 @@ pub fn usages_parser(input: &str) -> IResult<&str, Usages, VerboseError<&str>> {
         "usages",
         alt((
             map_res(
-                pair(tag_parser, separated_list2(ws_parser, usage_item_parser)),
-                |(tag, usage_items)| {
+                pair(opt(terminated(tag_usage_item_parser, ws_parser)), separated_list2(ws_parser, usage_item_parser)),
+                |(tag_usage_item, usage_items)| {
                     // validate that integers are increasing with step 1
                     let is_increasing = usage_items
                         .iter()
@@ -64,7 +64,7 @@ pub fn usages_parser(input: &str) -> IResult<&str, Usages, VerboseError<&str>> {
                     if !is_increasing {
                         return Err(nom::Err::Error(KitaError::IncreasingUsagesList));
                     }
-                    Ok(Usages::Common(tag, usage_items))
+                    Ok(Usages::Common(tag_usage_item, usage_items))
                 },
             ),
             map_res(
@@ -108,7 +108,7 @@ pub fn usage_item_tagged_parser(input: &str) -> IResult<&str, UsageItemTagged, V
 
 /*
 UsageTagged
-    Tag Usage
+    (TagUsage ws)? Usage
 */
 #[derive(Debug)]
 pub struct UsageTagged<'a>(Tag, Usage<'a>);
@@ -116,14 +116,26 @@ pub struct UsageTagged<'a>(Tag, Usage<'a>);
 pub fn usage_tagged_parser(input: &str) -> IResult<&str, UsageTagged, VerboseError<&str>> {
     context(
         "usage_tagged",
-        map(tuple((tag_parser, usage_parser)), |(tag, usage)| {
-            UsageTagged(tag, usage)
+        map(tuple((opt(terminated(tag_usage_parser, ws_parser)), usage_parser)), |(tag_usage, usage)| {
+            UsageTagged(tag_usage, usage)
         }),
     )(input)
 }
 
 /*
-Tag
+TagUsageItem
+    MultipleTags
+    "S" "p.a."
+    "3.Gr." ws Categories
+    "3.Gr." ws Temporality
+    PartOfSpeech
+    Categories
+    Temporality
+*/
+
+
+/*
+TagUsage
     (PartOfSpeechTag ws)? (Categories ws)? (Temporality ws)?
 */
 #[derive(Debug)]
@@ -133,9 +145,9 @@ pub struct Tag(
     Option<Temporality>,
 );
 
-pub fn tag_parser(input: &str) -> IResult<&str, Tag, VerboseError<&str>> {
+pub fn tag_usage_parser(input: &str) -> IResult<&str, Tag, VerboseError<&str>> {
     context(
-        "tag",
+        "tag_usage",
         map(
             tuple((
                 opt(terminated(part_of_speech_tag_parser, ws_parser)),
