@@ -8,6 +8,26 @@ use nom::IResult;
 use super::Index;
 
 /*
+MultiTerm
+  WordKaSmall ("|" WordKaSmall)?
+*/
+#[derive(Debug)]
+pub struct MultiTerm<'a>(&'a str, Option<&'a str>);
+
+pub fn multi_term_parser(input: &str) -> IResult<&str, MultiTerm, VerboseError<&str>> {
+  context(
+    "multi_term",
+    
+    map(
+        tuple((headword_ka_parser, opt(superscript_number_parser))),
+        |(value, index)| Term(value, index),
+    ),
+)(input)
+}
+
+word_ka_small_parser
+
+/*
 Term
   HeadwordKa SuperscriptNumber?
 */

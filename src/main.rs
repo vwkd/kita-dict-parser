@@ -18,22 +18,17 @@ fn main() {
     println!("--------- NOVERBS ---------");
 
     for (index, line) in lines_noverbs.into_iter().enumerate() {
-        // todo: parse skipped lines
-        if line.contains(['|', '~', '=']) || line.contains("...") {
-            continue;
-        }
-
         let entry = general::parse(&line);
 
         match entry {
             Err(e) => {
-                eprintln!("{index}: {line}");
-                eprintln!("{:#?}\n", e);
+                // eprintln!("{index}: {line}");
+                // eprintln!("{:#?}\n", e);
             }
             Ok(entry) => {
                 noverbs_success += 1.;
-                println!("{index}: {line}");
-                println!("{:?}\n", entry);
+                // println!("{index}: {line}");
+                // println!("{:?}\n", entry);
             }
         }
     }
@@ -49,7 +44,10 @@ fn main() {
 
     println!("--------- VERBS ---------");
 
+    #[allow(unreachable_code, unused_variables)]
     for (index, line) in lines_verbs.into_iter().enumerate() {
+        // todo: remove
+        continue;
         let entry = verb::parse(&line);
 
         match entry {
