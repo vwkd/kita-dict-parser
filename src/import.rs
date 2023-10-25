@@ -1,5 +1,6 @@
 use regex::Regex;
-use std::{error, fmt, fs, io};
+use std::{fs, io};
+use thiserror::Error;
 
 const DICT_FILEPATH: &str = "../kita-dict-data/src/dict.txt";
 
@@ -11,38 +12,14 @@ pub enum Entry {
 
 pub type Dict = Vec<Entry>;
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum ImportError {
-    LoadingFile(io::Error),
+    #[error("can't load file")]
+    LoadingFile(#[from] io::Error),
+    #[error("can't find page '{0}'")]
     PageNotFound(String),
+    // #[error("can't get entries")]
     // GettingEntries,
-}
-
-impl fmt::Display for ImportError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ImportError::LoadingFile(..) => write!(f, "can't load file"),
-            ImportError::PageNotFound(ref page) => write!(f, "can't find page '{}'", page),
-            // ImportError::GettingEntries =>
-            //     write!(f, "can't get entries"),
-        }
-    }
-}
-
-impl error::Error for ImportError {
-    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-        match *self {
-            ImportError::LoadingFile(ref e) => Some(e),
-            ImportError::PageNotFound(..) => None,
-            // ImportError::GettingEntries => None,
-        }
-    }
-}
-
-impl From<io::Error> for ImportError {
-    fn from(err: io::Error) -> ImportError {
-        ImportError::LoadingFile(err)
-    }
 }
 
 pub fn load_dict(next_page: &str) -> Result<Dict, ImportError> {
