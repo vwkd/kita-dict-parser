@@ -34,10 +34,9 @@ pub fn load_dict(next_page: &str) -> Result<Dict, ImportError> {
 /// - merge page breaks
 /// - partition into entries
 pub fn get_entries(text: &str, next_page: &str) -> Result<Dict, ImportError> {
-    let re_next_page = Regex::new(&format!(r"\n\n## {}", next_page)).expect("Invalid Regex");
-    let text = re_next_page
-        .split(text)
-        .next()
+    let next_page_header = format!("\n\n## {next_page}");
+    let (text, _) = text
+        .split_once(&next_page_header)
         .ok_or_else(|| ImportError::PageNotFound(next_page.to_owned()))?;
 
     // todo: find way to use slices to avoid allocations
