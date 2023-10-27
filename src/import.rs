@@ -1,16 +1,15 @@
-use regex::Regex;
 use std::{fs, io};
 use thiserror::Error;
 
 const DICT_FILEPATH: &str = "../kita-dict-data/src/dict.txt";
 
 #[derive(Debug)]
-pub enum Entry {
-    Verb(String),
-    Other(String),
+pub enum Entry<'a> {
+    Verb(Vec<&'a str>),
+    Other(&'a str),
 }
 
-pub type Dict = Vec<Entry>;
+pub type Dict<'a> = Vec<Entry<'a>>;
 
 #[derive(Error, Debug)]
 pub enum ImportError {
@@ -22,7 +21,7 @@ pub enum ImportError {
     // GettingEntries,
 }
 
-pub fn load_dict(next_page: &str) -> Result<Dict, ImportError> {
+pub fn load_dict<'a>(next_page: &'a str) -> Result<Dict<'a>, ImportError> {
     let text = fs::read_to_string(DICT_FILEPATH)?;
     get_entries(&text, next_page)
 }
@@ -39,27 +38,45 @@ pub fn get_entries(text: &str, next_page: &str) -> Result<Dict, ImportError> {
         .split_once(&next_page_header)
         .ok_or_else(|| ImportError::PageNotFound(next_page.to_owned()))?;
 
-    // todo: find way to use slices to avoid allocations
-    let re_header_lines = Regex::new(r"(?m)^##.*\n").expect("Invalid Regex");
-    let text = re_header_lines.replace_all(text, "");
+    let lines: Vec<&str> = text
+        .lines()
+        .filter(|line| !line.is_empty() && !line.starts_with("##"))
+        // .fold(Vec::new(), |mut acc, line| {
+        //     acc.push(line);
+        //     acc
+        // });
+        .collect();
 
-    let re_empty_lines = Regex::new(r"(?m)^\n").expect("Invalid Regex");
-    let text = re_empty_lines.replace_all(&text, "");
-
-    let re_continued_lines = Regex::new(r"\n♦︎").expect("Invalid Regex");
-    let text = re_continued_lines.replace_all(&text, "");
-
-    let re_entry = Regex::new(r"(?m)^\S.+(?:\n  .+)*$").expect("Invalid Regex");
-
-    // todo: make sure matching instead of splitting actually covers the whole string, i.e. no unmatched parts due to errors in the source text
-    Ok(re_entry
-        .find_iter(&text)
-        .map(|entry| {
-            if entry.as_str().contains('\n') {
-                Entry::Verb(entry.as_str().to_owned())
+    let lines: Vec<&str> = lines
+        .group_by(|a, b| b.starts_with("♦︎"))
+        .map(|x| {
+            if x.len() == 2 && x[1].starts_with("♦︎") {
+                let first = x[0];
+                let second = x[1].strip_prefix("♦︎").unwrap();
+                let joined = [first, second].concat();
+                &[joined.as_str()]
             } else {
-                Entry::Other(entry.as_str().to_owned())
+                x
             }
         })
-        .collect())
+        .flat_map(|&slice| slice)
+        .collect();
+
+    let lines: Dict = lines
+        .group_by(|a, b| b.starts_with("  "))
+        .map(|x| {
+            if x.len() == 1 {
+                let other = x[0];
+                Entry::Other(other)
+            } else {
+                let clean: Vec<&str> = x
+                    .iter()
+                    .map(|l| l.trim_start_matches(' '))
+                    .collect();
+                Entry::Verb(clean)
+            }
+        })
+        .collect();
+
+    Ok(lines)
 }
