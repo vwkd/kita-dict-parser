@@ -13,11 +13,11 @@ pub enum Entry {
 pub type Dict = Vec<Entry>;
 
 #[derive(Error, Debug)]
-pub enum ImportError {
+pub enum ImportError<'a> {
     #[error("can't load file")]
     LoadingFile(#[from] io::Error),
     #[error("can't find page '{0}'")]
-    PageNotFound(String),
+    PageNotFound(&'a str),
     // #[error("can't get entries")]
     // GettingEntries,
 }
@@ -33,11 +33,11 @@ pub fn load_dict(next_page: &str) -> Result<Dict, ImportError> {
 /// - filter out empty lines
 /// - merge page breaks
 /// - partition into entries
-pub fn get_entries(text: &str, next_page: &str) -> Result<Dict, ImportError> {
+pub fn get_entries<'a>(text: &str, next_page: &'a str) -> Result<Dict, ImportError<'a>> {
     let next_page_header = format!("\n\n## {next_page}");
     let (text, _) = text
         .split_once(&next_page_header)
-        .ok_or_else(|| ImportError::PageNotFound(next_page.to_owned()))?;
+        .ok_or_else(|| ImportError::PageNotFound(next_page))?;
 
     // todo: find way to use slices to avoid allocations
     let re_header_lines = Regex::new(r"(?m)^##.*\n").expect("Invalid Regex");

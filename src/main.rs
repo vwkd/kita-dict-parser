@@ -5,11 +5,12 @@ use import::{load_dict, Entry};
 use parser::{general, verb};
 
 fn main() {
-    let next_page = std::env::var("NEXT_PAGE").unwrap_or("1/39".to_owned());
+    let next_page = std::env::var("NEXT_PAGE");
+    let next_page = next_page.as_deref().unwrap_or("1/39");
 
     println!("Parsing dict until page {}...", next_page);
 
-    let dict = load_dict(&next_page).expect("Error getting entries");
+    let dict = load_dict(next_page).expect("Error getting entries");
 
     for (index, entry) in dict.into_iter().enumerate() {
         match entry {
