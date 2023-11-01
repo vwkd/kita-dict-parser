@@ -1,16 +1,16 @@
-use nom::{
-    bytes::complete::take_while1,
-    error::{context, VerboseError},
-    IResult,
-};
+use winnow::error::StrContext;
+use winnow::prelude::*;
+use winnow::token::take_while;
 
 // note: allow one letter
 /*
 WordKaSmall
     CharKaSmall+
 */
-pub fn word_ka_small_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context("word_ka_small", take_while1(is_char_ka))(input)
+pub fn word_ka_small_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    take_while(1.., is_char_ka)
+        .context(StrContext::Label("word_ka_small"))
+        .parse_next(input)
 }
 
 /*
@@ -30,14 +30,14 @@ mod tests {
 
     #[test]
     fn test_word_ka_small_parser() {
-        let a = word_ka_small_parser("კატა");
+        let a = word_ka_small_parser(&mut "კატა");
         assert!(a.is_ok());
 
-        let b = word_ka_small_parser(" კატა");
+        let b = word_ka_small_parser(&mut " კატა");
         assert!(b.is_err());
 
         // beware: first is capital letter, different from small letters!
-        let c = word_ka_small_parser("Კატა");
+        let c = word_ka_small_parser(&mut "Კატა");
         assert!(c.is_err());
     }
 

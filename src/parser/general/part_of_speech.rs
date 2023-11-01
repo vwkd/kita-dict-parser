@@ -1,11 +1,5 @@
-use nom::{
-    branch::alt,
-    bytes::complete::tag,
-    combinator::{map, value},
-    error::VerboseError,
-    sequence::separated_pair,
-    IResult,
-};
+use winnow::combinator::{alt, separated_pair};
+use winnow::prelude::*;
 
 use super::character::ws_parser;
 
@@ -20,13 +14,12 @@ pub enum PartOfSpeechTag {
     Multiple(Vec<PartOfSpeech>),
 }
 
-pub fn part_of_speech_tag_parser(
-    input: &str,
-) -> IResult<&str, PartOfSpeechTag, VerboseError<&str>> {
+pub fn part_of_speech_tag_parser<'a>(input: &mut &'a str) -> PResult<PartOfSpeechTag> {
     alt((
-        map(part_of_speech_multiple_parser, PartOfSpeechTag::Multiple),
-        map(part_of_speech_parser, PartOfSpeechTag::Single),
-    ))(input)
+        part_of_speech_multiple_parser.map(PartOfSpeechTag::Multiple),
+        part_of_speech_parser.map(PartOfSpeechTag::Single),
+    ))
+    .parse_next(input)
 }
 
 /*
@@ -35,20 +28,17 @@ PartOfSpeechMultiple
   "S" ws "p.n."
 */
 
-pub fn part_of_speech_multiple_parser(
-    input: &str,
-) -> IResult<&str, Vec<PartOfSpeech>, VerboseError<&str>> {
-    map(
-        separated_pair(
-            value(PartOfSpeech::S, tag("S")),
-            ws_parser,
-            alt((
-                value(PartOfSpeech::PA, tag("p.a.")),
-                value(PartOfSpeech::PN, tag("p.n.")),
-            )),
-        ),
-        |(pos1, pos2)| vec![pos1, pos2],
-    )(input)
+pub fn part_of_speech_multiple_parser<'a>(input: &mut &'a str) -> PResult<Vec<PartOfSpeech>> {
+    separated_pair(
+        "S".value(PartOfSpeech::S),
+        ws_parser,
+        alt((
+            "p.a.".value(PartOfSpeech::PA),
+            "p.n.".value(PartOfSpeech::PN),
+        )),
+    )
+    .map(|(pos1, pos2)| vec![pos1, pos2])
+    .parse_next(input)
 }
 
 /*
@@ -143,35 +133,36 @@ pub enum PartOfSpeech {
     SPN,
 }
 
-pub fn part_of_speech_parser(input: &str) -> IResult<&str, PartOfSpeech, VerboseError<&str>> {
+pub fn part_of_speech_parser<'a>(input: &mut &'a str) -> PResult<PartOfSpeech> {
     alt((
         alt((
-            value(PartOfSpeech::A, tag("a")),
-            value(PartOfSpeech::AD, tag("ad")),
-            value(PartOfSpeech::ADDEM, tag("ad.dem.")),
-            value(PartOfSpeech::ADINT, tag("ad.int.")),
-            value(PartOfSpeech::ADREL, tag("ad.rel.")),
-            value(PartOfSpeech::CJ, tag("cj")),
-            value(PartOfSpeech::DEKL, tag("dekl")),
-            value(PartOfSpeech::ENKL, tag("enkl")),
-            value(PartOfSpeech::DRGR, tag("3.Gr.")),
-            value(PartOfSpeech::INF, tag("inf")),
-            value(PartOfSpeech::INT, tag("int")),
-            value(PartOfSpeech::PA, tag("p.a.")),
-            value(PartOfSpeech::PFP, tag("p.f.")),
-            value(PartOfSpeech::PN, tag("p.n.")),
-            value(PartOfSpeech::PP, tag("pp")),
-            value(PartOfSpeech::PPP, tag("p.p.")),
-            value(PartOfSpeech::PRDEM, tag("pr.dem.")),
-            value(PartOfSpeech::PRINT, tag("pr.int.")),
-            value(PartOfSpeech::PRPERS, tag("pr.pers.")),
-            value(PartOfSpeech::PRPOSS, tag("pr.poss.")),
-            value(PartOfSpeech::PRREL, tag("pr.rel.")),
+            "a".value(PartOfSpeech::A),
+            "ad".value(PartOfSpeech::AD),
+            "ad.dem.".value(PartOfSpeech::ADDEM),
+            "ad.int.".value(PartOfSpeech::ADINT),
+            "ad.rel.".value(PartOfSpeech::ADREL),
+            "cj".value(PartOfSpeech::CJ),
+            "dekl".value(PartOfSpeech::DEKL),
+            "enkl".value(PartOfSpeech::ENKL),
+            "3.Gr.".value(PartOfSpeech::DRGR),
+            "inf".value(PartOfSpeech::INF),
+            "int".value(PartOfSpeech::INT),
+            "p.a.".value(PartOfSpeech::PA),
+            "p.f.".value(PartOfSpeech::PFP),
+            "p.n.".value(PartOfSpeech::PN),
+            "pp".value(PartOfSpeech::PP),
+            "p.p.".value(PartOfSpeech::PPP),
+            "pr.dem.".value(PartOfSpeech::PRDEM),
+            "pr.int.".value(PartOfSpeech::PRINT),
+            "pr.pers.".value(PartOfSpeech::PRPERS),
+            "pr.poss.".value(PartOfSpeech::PRPOSS),
+            "pr.rel.".value(PartOfSpeech::PRREL),
         )),
         alt((
-            value(PartOfSpeech::PRV, tag("prv")),
-            value(PartOfSpeech::S, tag("S")),
-            value(PartOfSpeech::SPN, tag("spn")),
+            "prv".value(PartOfSpeech::PRV),
+            "S".value(PartOfSpeech::S),
+            "spn".value(PartOfSpeech::SPN),
         )),
-    ))(input)
+    ))
+    .parse_next(input)
 }

@@ -1,9 +1,5 @@
-use nom::{
-    combinator::map,
-    error::{context, VerboseError},
-    sequence::tuple,
-    IResult,
-};
+use winnow::error::StrContext;
+use winnow::prelude::*;
 
 use crate::parser::general::character::ws_parser;
 
@@ -20,20 +16,17 @@ VerbSingleForm
 #[derive(Debug)]
 pub struct VerbSingleForm<'a>(VerbCategory, VerbConjugation<'a>, VerbExpression<'a>);
 
-pub fn form_parser(input: &str) -> IResult<&str, VerbSingleForm, VerboseError<&str>> {
-    context(
-        "form",
-        map(
-            tuple((
-                category_parser,
-                ws_parser,
-                conjugation_parser,
-                ws_parser,
-                expression_parser,
-            )),
-            |(category, _, conjugation, _, expression)| {
-                VerbSingleForm(category, conjugation, expression)
-            },
-        ),
-    )(input)
+pub fn form_parser<'a>(input: &mut &'a str) -> PResult<VerbSingleForm<'a>> {
+    (
+        category_parser,
+        ws_parser,
+        conjugation_parser,
+        ws_parser,
+        expression_parser,
+    )
+        .map(|(category, _, conjugation, _, expression)| {
+            VerbSingleForm(category, conjugation, expression)
+        })
+        .context(StrContext::Label("form"))
+        .parse_next(input)
 }

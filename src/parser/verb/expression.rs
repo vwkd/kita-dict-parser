@@ -1,8 +1,5 @@
-use nom::{
-    combinator::map,
-    error::{context, VerboseError},
-    IResult,
-};
+use winnow::error::StrContext;
+use winnow::prelude::*;
 
 use crate::parser::general::sentence_de::sentence_de_parser;
 
@@ -14,6 +11,9 @@ VerbExpression
 #[derive(Debug)]
 pub struct VerbExpression<'a>(&'a str);
 
-pub fn expression_parser(input: &str) -> IResult<&str, VerbExpression, VerboseError<&str>> {
-    context("expression", map(sentence_de_parser, VerbExpression))(input)
+pub fn expression_parser<'a>(input: &mut &'a str) -> PResult<VerbExpression<'a>> {
+    sentence_de_parser
+        .map(VerbExpression)
+        .context(StrContext::Label("expression"))
+        .parse_next(input)
 }

@@ -1,4 +1,4 @@
-use nom::{character::complete::char, combinator::value, error::VerboseError, IResult};
+use winnow::prelude::*;
 
 /*
 Temporality
@@ -9,6 +9,6 @@ pub enum Temporality {
     Archaic,
 }
 
-pub fn temporality_parser(input: &str) -> IResult<&str, Temporality, VerboseError<&str>> {
-    value(Temporality::Archaic, char('†'))(input)
+pub fn temporality_parser<'a>(input: &mut &'a str) -> PResult<Temporality> {
+    '†'.value(Temporality::Archaic).parse_next(input)
 }

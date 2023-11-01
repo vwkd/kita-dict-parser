@@ -1,3 +1,7 @@
+use winnow::combinator::{alt, delimited, not, separated, separated_pair};
+use winnow::prelude::*;
+use winnow::{combinator::terminated, error::StrContext};
+
 use super::{
     category::category_parser,
     character::{integer_parser, ws_parser},
@@ -5,29 +9,16 @@ use super::{
     word_de::{word_de_big_parser, word_de_small_parser},
     word_ka::word_ka_small_parser,
 };
-use nom::{
-    branch::alt,
-    bytes::complete::tag,
-    character::complete::char,
-    combinator::{not, recognize},
-    error::{context, VerboseError},
-    multi::separated_list1,
-    sequence::{delimited, pair, separated_pair, terminated, tuple},
-    IResult,
-};
 
 /*
 SentenceDe
   SentenceDePart (SentenceDeSeparator SentenceDePart)*
 */
-pub fn sentence_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "sentence_de",
-        recognize(separated_list1(
-            sentence_de_separator_parser,
-            sentence_de_part_parser,
-        )),
-    )(input)
+pub fn sentence_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    separated(1.., sentence_de_part_parser, sentence_de_separator_parser)
+        .recognize()
+        .context(StrContext::Label("sentence_de"))
+        .parse_next(input)
 }
 
 /*
@@ -36,15 +27,14 @@ SentenceDePart
   '"' WordsDe '"'
   "(" WordsDeParentheses ")"
 */
-pub fn sentence_de_part_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "sentence_de_part",
-        alt((
-            words_de_parser,
-            recognize(delimited(char('"'), words_de_parser, char('"'))),
-            recognize(delimited(char('('), words_de_parentheses_parser, char(')'))),
-        )),
-    )(input)
+pub fn sentence_de_part_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
+        words_de_parser,
+        delimited('"', words_de_parser, '"').recognize(),
+        delimited('(', words_de_parentheses_parser, ')').recognize(),
+    ))
+    .context(StrContext::Label("sentence_de_part"))
+    .parse_next(input)
 }
 
 /*
@@ -52,28 +42,24 @@ SentenceDeSeparator
   ws
   "," ws
 */
-pub fn sentence_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "sentence_de_separator",
-        alt((
-            recognize(ws_parser),
-            recognize(terminated(char(','), ws_parser)),
-        )),
-    )(input)
+pub fn sentence_de_separator_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
+        ws_parser.recognize(),
+        terminated(',', ws_parser).recognize(),
+    ))
+    .context(StrContext::Label("sentence_de_separator"))
+    .parse_next(input)
 }
 
 /*
 WordsDeParentheses
   WordDe (WordDeParenthesesSeparator WordDe)*
 */
-pub fn words_de_parentheses_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "words_de_parentheses",
-        recognize(separated_list1(
-            word_de_parentheses_separator_parser,
-            word_de_parser,
-        )),
-    )(input)
+pub fn words_de_parentheses_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    separated(1.., word_de_parser, word_de_parentheses_separator_parser)
+        .recognize()
+        .context(StrContext::Label("words_de_parentheses"))
+        .parse_next(input)
 }
 
 /*
@@ -83,29 +69,26 @@ WordDeParenthesesSeparator
   ";" ws
   "/"
 */
-pub fn word_de_parentheses_separator_parser(
-    input: &str,
-) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "word_de_parentheses_separator",
-        alt((
-            recognize(ws_parser),
-            recognize(terminated(char(','), ws_parser)),
-            recognize(terminated(char(';'), ws_parser)),
-            recognize(char('/')),
-        )),
-    )(input)
+pub fn word_de_parentheses_separator_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
+        ws_parser.recognize(),
+        terminated(',', ws_parser).recognize(),
+        terminated(';', ws_parser).recognize(),
+        '/'.recognize(),
+    ))
+    .context(StrContext::Label("word_de_parentheses_separator"))
+    .parse_next(input)
 }
 
 /*
 WordsDe
   WordDe (WordDeSeparator WordDe)*
 */
-pub fn words_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "words_de",
-        recognize(separated_list1(word_de_separator_parser, word_de_parser)),
-    )(input)
+pub fn words_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    separated(1.., word_de_parser, word_de_separator_parser)
+        .recognize()
+        .context(StrContext::Label("words_de"))
+        .parse_next(input)
 }
 
 /*
@@ -114,15 +97,14 @@ WordDeSeparator
   "," ws
   "/"
 */
-pub fn word_de_separator_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "word_de_separator",
-        alt((
-            recognize(ws_parser),
-            recognize(terminated(char(','), ws_parser)),
-            recognize(char('/')),
-        )),
-    )(input)
+pub fn word_de_separator_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
+        ws_parser.recognize(),
+        terminated(',', ws_parser).recognize(),
+        '/'.recognize(),
+    ))
+    .context(StrContext::Label("word_de_separator"))
+    .parse_next(input)
 }
 
 /*
@@ -159,129 +141,83 @@ WordDe
   WordKaSmall
   // ...
 */
-pub fn word_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "word_de",
+pub fn word_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
         alt((
-            alt((
-                recognize(date_de_parser),
-                // beware: negative lookahead for ".", otherwise consumes part of higher-up UsageItem which then fails
-                recognize(terminated(integer_parser, not(char('.')))),
-                shorthand_variable_de_parser,
-                shorthand_combination_de_parser,
-                shorthand_de_parser,
-                shorthand_other_de_parser,
-                recognize(tuple((
-                    word_de_small_parser,
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                    word_de_small_parser,
-                ))),
-                recognize(tuple((
-                    word_de_small_parser,
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                ))),
-                recognize(pair(word_de_small_parser, char('!'))),
-                recognize(tuple((
-                    word_de_small_parser,
-                    char('-'),
-                    word_de_small_parser,
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                ))),
-                recognize(tuple((
-                    word_de_small_parser,
-                    char('-'),
-                    word_de_small_parser,
-                ))),
-                recognize(tuple((word_de_small_parser, char('-')))),
-            )),
-            alt((
-                recognize(tuple((word_de_small_parser, char(':')))),
+            date_de_parser.recognize(),
+            // beware: negative lookahead for ".", otherwise consumes part of higher-up UsageItem which then fails
+            terminated(integer_parser, not('.')).recognize(),
+            shorthand_variable_de_parser,
+            shorthand_combination_de_parser,
+            shorthand_de_parser,
+            shorthand_other_de_parser,
+            (
                 word_de_small_parser,
-                recognize(tuple((
-                    char('-'),
-                    word_de_small_parser,
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                ))),
-                recognize(pair(char('-'), word_de_small_parser)),
-                recognize(tuple((
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                    word_de_small_parser,
-                    char('-'),
-                ))),
-                recognize(tuple((
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                    word_de_small_parser,
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                ))),
-                recognize(tuple((
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                    word_de_small_parser,
-                ))),
-                recognize(tuple((
-                    char('('),
-                    word_de_small_parser,
-                    char('-'),
-                    char(')'),
-                    word_de_small_parser,
-                ))),
-                recognize(tuple((word_de_big_parser, char('-'), word_de_big_parser))),
-                recognize(tuple((word_de_big_parser, char('-'), word_de_small_parser))),
-                recognize(pair(word_de_big_parser, char('-'))),
-                recognize(tuple((
-                    word_de_big_parser,
-                    char('('),
-                    word_de_small_parser,
-                    char(')'),
-                ))),
-                recognize(pair(word_de_big_parser, tag("..."))),
-                word_de_big_parser,
-            )),
-            alt((
-                recognize(tuple((
-                    char('('),
-                    word_de_big_parser,
-                    char('-'),
-                    char(')'),
-                    word_de_big_parser,
-                ))),
-                recognize(tuple((word_ka_small_parser, char('-'), word_de_big_parser))),
-                recognize(pair(word_ka_small_parser, char('!'))),
-                word_ka_small_parser,
-            )),
+                '(',
+                word_de_small_parser,
+                ')',
+                word_de_small_parser,
+            )
+                .recognize(),
+            (word_de_small_parser, '(', word_de_small_parser, ')').recognize(),
+            (word_de_small_parser, '!').recognize(),
+            (
+                word_de_small_parser,
+                '-',
+                word_de_small_parser,
+                '(',
+                word_de_small_parser,
+                ')',
+            )
+                .recognize(),
+            (word_de_small_parser, '-', word_de_small_parser).recognize(),
+            (word_de_small_parser, '-').recognize(),
+        )),
+        alt((
+            (word_de_small_parser, ':').recognize(),
+            word_de_small_parser,
+            ('-', word_de_small_parser, '(', word_de_small_parser, ')').recognize(),
+            ('-', word_de_small_parser).recognize(),
+            ('(', word_de_small_parser, ')', word_de_small_parser, '-').recognize(),
+            (
+                '(',
+                word_de_small_parser,
+                ')',
+                word_de_small_parser,
+                '(',
+                word_de_small_parser,
+                ')',
+            )
+                .recognize(),
+            ('(', word_de_small_parser, ')', word_de_small_parser).recognize(),
+            ('(', word_de_small_parser, '-', ')', word_de_small_parser).recognize(),
+            (word_de_big_parser, '-', word_de_big_parser).recognize(),
+            (word_de_big_parser, '-', word_de_small_parser).recognize(),
+            (word_de_big_parser, '-').recognize(),
+            (word_de_big_parser, '(', word_de_small_parser, ')').recognize(),
+            (word_de_big_parser, "...").recognize(),
+            word_de_big_parser,
+        )),
+        alt((
+            ('(', word_de_big_parser, '-', ')', word_de_big_parser).recognize(),
+            (word_ka_small_parser, '-', word_de_big_parser).recognize(),
+            (word_ka_small_parser, '!').recognize(),
+            word_ka_small_parser,
             // ...
         )),
-    )(input)
+    ))
+    .context(StrContext::Label("word_de"))
+    .parse_next(input)
 }
 
 /*
 ShorthandVariableDe
   "zs." "-" WordDeSmall
 */
-pub fn shorthand_variable_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "shorthand_variable_de",
-        alt((recognize(separated_pair(
-            tag("zs."),
-            char('-'),
-            word_de_small_parser,
-        )),)),
-    )(input)
+pub fn shorthand_variable_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((separated_pair("zs.", '-', word_de_small_parser).recognize(),))
+        .context(StrContext::Label("shorthand_variable_de"))
+        .parse_next(input)
 }
 
 /*
@@ -290,15 +226,14 @@ ShorthandCombinationDe
   "a." ws PartOfSpeech
   "imS" ":"
 */
-pub fn shorthand_combination_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "shorthand_combination_de",
-        alt((
-            recognize(separated_pair(tag("a."), ws_parser, category_parser)),
-            recognize(separated_pair(tag("a."), ws_parser, part_of_speech_parser)),
-            recognize(tuple((tag("imS"), char(':')))),
-        )),
-    )(input)
+pub fn shorthand_combination_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
+        separated_pair("a.", ws_parser, category_parser).recognize(),
+        separated_pair("a.", ws_parser, part_of_speech_parser).recognize(),
+        ("imS", ':').recognize(),
+    ))
+    .context(StrContext::Label("shorthand_combination_de"))
+    .parse_next(input)
 }
 
 /*
@@ -319,27 +254,26 @@ ShorthandOtherDe
   "WG"
   "z.B."
 */
-pub fn shorthand_other_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "shorthand_other_de",
-        alt((
-            tag("bzw."),
-            tag("ca."),
-            tag("d.h."),
-            tag("durch-ea."),
-            tag("georg."),
-            tag("griech."),
-            tag("kaukas."),
-            tag("NG"),
-            tag("od."),
-            tag("OG"),
-            tag("SG"),
-            tag("umg."),
-            tag("usw."),
-            tag("WG"),
-            tag("z.B."),
-        )),
-    )(input)
+pub fn shorthand_other_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
+        "bzw.",
+        "ca.",
+        "d.h.",
+        "durch-ea.",
+        "georg.",
+        "griech.",
+        "kaukas.",
+        "NG",
+        "od.",
+        "OG",
+        "SG",
+        "umg.",
+        "usw.",
+        "WG",
+        "z.B.",
+    ))
+    .context(StrContext::Label("shorthand_other_de"))
+    .parse_next(input)
 }
 
 /*
@@ -418,93 +352,27 @@ ShorthandDe
   "wg."
   "zs."
 */
-pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "shorthand_de",
+pub fn shorthand_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
         alt((
-            alt((
-                tag("a."),
-                tag("Abk."),
-                tag("ag."),
-                tag("b."),
-                tag("Bed."),
-                tag("d.O."),
-                tag("do."),
-                tag("DOZ"),
-                tag("e-e"),
-                tag("e-m"),
-                tag("e-n"),
-                tag("e-r"),
-                tag("e-s"),
-                tag("e."),
-                tag("ea."),
-                tag("ehm."),
-                tag("et."),
-                tag("Fn."),
-                tag("FR"),
-                tag("fr."),
-            )),
-            alt((
-                tag("g."),
-                tag("gebr."),
-                tag("Ggs."),
-                tag("i.O."),
-                tag("imS"),
-                tag("intr."),
-                tag("IOZ"),
-                tag("Iter."),
-                tag("j-d"),
-                tag("j-m"),
-                tag("j-n"),
-                tag("j-s"),
-                tag("L."),
-                tag("l."),
-                tag("m-e"),
-                tag("m-m"),
-                tag("m-n"),
-                tag("m-r"),
-                tag("m-s"),
-                tag("m."),
-            )),
-            alt((
-                tag("m. Vn."),
-                tag("mst"),
-                tag("neg."),
-                tag("NG"),
-                tag("ng."),
-                tag("NV"),
-                tag("Obj."),
-                tag("od."),
-                tag("OG"),
-                tag("og."),
-                tag("OR"),
-                tag("OV"),
-                tag("OVZ"),
-                tag("P."),
-                tag("Pkt."),
-                tag("PR"),
-                tag("s."),
-                tag("SG"),
-                tag("sg."),
-                tag("sn"),
-            )),
-            alt((
-                tag("Subj."),
-                tag("SupV"),
-                tag("SupVZ"),
-                tag("SV"),
-                tag("T."),
-                tag("u. zw."),
-                tag("u."),
-                tag("v."),
-                tag("Vn."),
-                tag("w. Vn."),
-                tag("WG"),
-                tag("wg."),
-                tag("zs."),
-            )),
+            "a.", "Abk.", "ag.", "b.", "Bed.", "d.O.", "do.", "DOZ", "e-e", "e-m", "e-n", "e-r",
+            "e-s", "e.", "ea.", "ehm.", "et.", "Fn.", "FR", "fr.",
         )),
-    )(input)
+        alt((
+            "g.", "gebr.", "Ggs.", "i.O.", "imS", "intr.", "IOZ", "Iter.", "j-d", "j-m", "j-n",
+            "j-s", "L.", "l.", "m-e", "m-m", "m-n", "m-r", "m-s", "m.",
+        )),
+        alt((
+            "m. Vn.", "mst", "neg.", "NG", "ng.", "NV", "Obj.", "od.", "OG", "og.", "OR", "OV",
+            "OVZ", "P.", "Pkt.", "PR", "s.", "SG", "sg.", "sn",
+        )),
+        alt((
+            "Subj.", "SupV", "SupVZ", "SV", "T.", "u. zw.", "u.", "v.", "Vn.", "w. Vn.", "WG",
+            "wg.", "zs.",
+        )),
+    ))
+    .context(StrContext::Label("shorthand_de"))
+    .parse_next(input)
 }
 
 // note: don't validate day
@@ -512,15 +380,11 @@ pub fn shorthand_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str
 DateDe
   Integer "." "ws" MonthDe
 */
-pub fn date_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "date_de",
-        recognize(separated_pair(
-            terminated(integer_parser, char('.')),
-            ws_parser,
-            month_de_parser,
-        )),
-    )(input)
+pub fn date_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    separated_pair(terminated(integer_parser, '.'), ws_parser, month_de_parser)
+        .recognize()
+        .context(StrContext::Label("date_de"))
+        .parse_next(input)
 }
 
 /*
@@ -538,22 +402,11 @@ MonthDe
   "Nov."
   "Dez."
 */
-pub fn month_de_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "month_de",
-        alt((
-            tag("Januar"),
-            tag("Februar"),
-            tag("März"),
-            tag("April"),
-            tag("Mai"),
-            tag("Juni"),
-            tag("Juli"),
-            tag("August"),
-            tag("Sept."),
-            tag("Okt."),
-            tag("Nov."),
-            tag("Dez."),
-        )),
-    )(input)
+pub fn month_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt((
+        "Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "Sept.", "Okt.",
+        "Nov.", "Dez.",
+    ))
+    .context(StrContext::Label("month_de"))
+    .parse_next(input)
 }

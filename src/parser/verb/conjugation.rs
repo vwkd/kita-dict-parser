@@ -1,12 +1,6 @@
-use nom::{
-    branch::alt,
-    bytes::complete::tag,
-    character::complete::char,
-    combinator::map,
-    error::{context, VerboseError},
-    sequence::{delimited, separated_pair, terminated},
-    IResult,
-};
+use winnow::combinator::{alt, delimited, terminated};
+use winnow::prelude::*;
+use winnow::{combinator::separated_pair, error::StrContext};
 
 use crate::parser::general::{character::ws_parser, word_ka::word_ka_small_parser};
 
@@ -43,16 +37,13 @@ pub enum PerfectiveS1<'a> {
     // ...
 }
 
-pub fn conjugation_parser(input: &str) -> IResult<&str, VerbConjugation, VerboseError<&str>> {
-    context(
-        "conjugation",
-        map(
-            separated_pair(form_class1_parser, ws_parser, form_class23_parser),
-            |((present_s1, future_s1), (aorist_s1, perfective_s1))| {
-                VerbConjugation(present_s1, future_s1, aorist_s1, perfective_s1)
-            },
-        ),
-    )(input)
+pub fn conjugation_parser<'a>(input: &mut &'a str) -> PResult<VerbConjugation<'a>> {
+    separated_pair(form_class1_parser, ws_parser, form_class23_parser)
+        .map(|((present_s1, future_s1), (aorist_s1, perfective_s1))| {
+            VerbConjugation(present_s1, future_s1, aorist_s1, perfective_s1)
+        })
+        .context(StrContext::Label("conjugation"))
+        .parse_next(input)
 }
 
 /*
@@ -60,41 +51,37 @@ VerbFormClass1
   WordKaSmall ws "fut" ws WordKaSmall
   WordKaSmall "," ws WordKaSmall
 */
-pub fn form_class1_parser(input: &str) -> IResult<&str, (PresentS1, FutureS1), VerboseError<&str>> {
-    context(
-        "form_class1",
-        alt((
-            separated_pair(
-                map(word_ka_small_parser, PresentS1::Full),
-                delimited(ws_parser, tag("fut"), ws_parser),
-                map(word_ka_small_parser, FutureS1::Full),
-            ),
-            separated_pair(
-                map(word_ka_small_parser, PresentS1::Full),
-                terminated(char(','), ws_parser),
-                map(terminated(preverb_parser, char('~')), FutureS1::Preverb),
-            ),
-        )),
-    )(input)
+pub fn form_class1_parser<'a>(input: &mut &'a str) -> PResult<(PresentS1<'a>, FutureS1<'a>)> {
+    alt((
+        separated_pair(
+            word_ka_small_parser.map(PresentS1::Full),
+            delimited(ws_parser, "fut", ws_parser),
+            word_ka_small_parser.map(FutureS1::Full),
+        ),
+        separated_pair(
+            word_ka_small_parser.map(PresentS1::Full),
+            terminated(',', ws_parser),
+            terminated(preverb_parser, '~').map(FutureS1::Preverb),
+        ),
+    ))
+    .context(StrContext::Label("form_class1"))
+    .parse_next(input)
 }
 
 /*
 VerbFormClass23
   "(" WordKaSmall ", " WordKaSmall ")"
 */
-pub fn form_class23_parser(
-    input: &str,
-) -> IResult<&str, (AoristS1, PerfectiveS1), VerboseError<&str>> {
-    context(
-        "form_class23",
-        delimited(
-            char('('),
-            separated_pair(
-                map(word_ka_small_parser, AoristS1::Full),
-                terminated(char(','), ws_parser),
-                map(word_ka_small_parser, PerfectiveS1::Full),
-            ),
-            char(')'),
+pub fn form_class23_parser<'a>(input: &mut &'a str) -> PResult<(AoristS1<'a>, PerfectiveS1<'a>)> {
+    delimited(
+        '(',
+        separated_pair(
+            word_ka_small_parser.map(AoristS1::Full),
+            terminated(',', ws_parser),
+            word_ka_small_parser.map(PerfectiveS1::Full),
         ),
-    )(input)
+        ')',
+    )
+    .context(StrContext::Label("form_class23"))
+    .parse_next(input)
 }

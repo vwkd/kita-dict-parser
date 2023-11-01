@@ -1,14 +1,11 @@
+use winnow::combinator::{alt, delimited, opt, preceded, separated_pair, terminated};
+use winnow::error::StrContext;
+use winnow::prelude::*;
+
 use super::category::{categories_parser, Categories};
 use super::character::{integer_parser, ws_parser};
 use super::term::{term_parser, Term};
 use super::Index;
-use nom::combinator::{map, opt};
-use nom::error::{context, VerboseError};
-use nom::sequence::{delimited, separated_pair, terminated, tuple};
-use nom::{
-    branch::alt, bytes::complete::tag, character::complete::char, combinator::value,
-    sequence::preceded, IResult,
-};
 
 /*
 Reference
@@ -17,39 +14,35 @@ Reference
 #[derive(Debug)]
 pub struct Reference<'a>(Term<'a>, Option<Index>, ReferenceKind, Option<Categories>);
 
-pub fn reference_parser(input: &str) -> IResult<&str, Reference, VerboseError<&str>> {
-    context(
-        "reference",
-        map(
-            separated_pair(
-                tuple((
-                    opt(terminated(categories_parser, ws_parser)),
-                    reference_kind_parser,
-                )),
-                ws_parser,
-                tuple((term_parser, opt(whitespace_usage_index_parser))),
-            ),
-            |((categories, kind), (term, index))| Reference(term, index, kind, categories),
+pub fn reference_parser<'a>(input: &mut &'a str) -> PResult<Reference<'a>> {
+    separated_pair(
+        (
+            opt(terminated(categories_parser, ws_parser)),
+            reference_kind_parser,
         ),
-    )(input)
+        ws_parser,
+        (term_parser, opt(whitespace_usage_index_parser)),
+    )
+    .map(|((categories, kind), (term, index))| Reference(term, index, kind, categories))
+    .context(StrContext::Label("reference"))
+    .parse_next(input)
 }
 
 /*
 WhitespaceUsageIndex
     ws "(" "Pkt." ws Integer ")"
 */
-pub fn whitespace_usage_index_parser(input: &str) -> IResult<&str, u8, VerboseError<&str>> {
-    context(
-        "whitespace_usage_index",
-        preceded(
-            ws_parser,
-            delimited(
-                char('('),
-                preceded(terminated(tag("Pkt."), ws_parser), integer_parser),
-                char(')'),
-            ),
+pub fn whitespace_usage_index_parser<'a>(input: &mut &'a str) -> PResult<u8> {
+    preceded(
+        ws_parser,
+        delimited(
+            '(',
+            preceded(terminated("Pkt.", ws_parser), integer_parser),
+            ')',
         ),
-    )(input)
+    )
+    .context(StrContext::Label("whitespace_usage_index"))
+    .parse_next(input)
 }
 
 /*
@@ -63,15 +56,11 @@ pub enum ReferenceKind {
     See,
 }
 
-pub fn reference_kind_parser(input: &str) -> IResult<&str, ReferenceKind, VerboseError<&str>> {
-    context(
-        "reference_kind",
-        alt((
-            value(
-                ReferenceKind::SeeMeaning,
-                separated_pair(tag("Bed."), ws_parser, tag("s.")),
-            ),
-            value(ReferenceKind::See, tag("s.")),
-        )),
-    )(input)
+pub fn reference_kind_parser<'a>(input: &mut &'a str) -> PResult<ReferenceKind> {
+    alt((
+        separated_pair("Bed.", ws_parser, "s.").value(ReferenceKind::SeeMeaning),
+        "s.".value(ReferenceKind::See),
+    ))
+    .context(StrContext::Label("reference_kind"))
+    .parse_next(input)
 }

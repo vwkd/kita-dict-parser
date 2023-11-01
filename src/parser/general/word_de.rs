@@ -1,24 +1,17 @@
-use nom::{
-    bytes::complete::take_while1,
-    character::complete::{char, satisfy},
-    combinator::{opt, recognize},
-    error::{context, VerboseError},
-    sequence::{pair, tuple},
-    IResult,
-};
+use winnow::combinator::opt;
+use winnow::error::StrContext;
+use winnow::prelude::*;
+use winnow::token::{one_of, take_while};
 
 /*
 WordDeSmall
     CharDeSmall+ ("'" "s"?)?
 */
-pub fn word_de_small_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "word_de_small",
-        recognize(pair(
-            take_while1(is_char_de_small),
-            opt(pair(char('\''), opt(char('s')))),
-        )),
-    )(input)
+pub fn word_de_small_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    (take_while(1.., is_char_de_small), opt(('\'', opt('s'))))
+        .recognize()
+        .context(StrContext::Label("word_de_small"))
+        .parse_next(input)
 }
 
 // note: require at least two letters
@@ -26,14 +19,11 @@ pub fn word_de_small_parser(input: &str) -> IResult<&str, &str, VerboseError<&st
 WordDeBig
     CharDeBig CharDeSmall+
 */
-pub fn word_de_big_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "word_de_big",
-        recognize(tuple((
-            satisfy(is_char_de_big),
-            take_while1(is_char_de_small),
-        ))),
-    )(input)
+pub fn word_de_big_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    (one_of(is_char_de_big), take_while(1.., is_char_de_small))
+        .recognize()
+        .context(StrContext::Label("word_de_big"))
+        .parse_next(input)
 }
 
 /*
@@ -72,25 +62,25 @@ mod tests {
 
     #[test]
     fn test_word_de_small_parser() {
-        let a = word_de_small_parser("bär");
+        let a = word_de_small_parser(&mut "bär");
         assert!(a.is_ok());
 
-        let b = word_de_small_parser(" bär");
+        let b = word_de_small_parser(&mut " bär");
         assert!(b.is_err());
 
-        let c = word_de_small_parser("Bär");
+        let c = word_de_small_parser(&mut "Bär");
         assert!(c.is_err());
     }
 
     #[test]
     fn test_word_de_big_parser() {
-        let a = word_de_big_parser("Bär");
+        let a = word_de_big_parser(&mut "Bär");
         assert!(a.is_ok());
 
-        let b = word_de_big_parser(" Bär");
+        let b = word_de_big_parser(&mut " Bär");
         assert!(b.is_err());
 
-        let c = word_de_big_parser("bär");
+        let c = word_de_big_parser(&mut "bär");
         assert!(c.is_err());
     }
 

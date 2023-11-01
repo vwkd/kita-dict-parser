@@ -1,17 +1,14 @@
-use nom::branch::alt;
-use nom::character::complete::char;
-use nom::combinator::{map_res, recognize, value};
-use nom::error::{context, VerboseError};
-use nom::multi::many0;
-use nom::sequence::pair;
-use nom::IResult;
+use winnow::prelude::*;
+use winnow::{combinator::alt, combinator::repeat, error::StrContext, PResult};
 
 /*
 ws
     UNICODE_WHITESPACE_CHARACTER
 */
-pub fn ws_parser(input: &str) -> IResult<&str, char, VerboseError<&str>> {
-    context("ws", char(' '))(input)
+// pub fn entry_parser<'a>(input: &mut &'a str) -> PResult<Entry<'a>> {
+
+pub fn ws_parser<'a>(input: &mut &'a str) -> PResult<char> {
+    ' '.context(StrContext::Label("ws")).parse_next(input)
 }
 
 // todo: maybe more?
@@ -27,35 +24,32 @@ SuperscriptNumber
     "⁸"
     "⁹"
 */
-pub fn superscript_number_parser(input: &str) -> IResult<&str, u8, VerboseError<&str>> {
-    context(
-        "superscript_number",
-        alt((
-            value(1, char('¹')),
-            value(2, char('²')),
-            value(3, char('³')),
-            value(4, char('⁴')),
-            value(5, char('⁵')),
-            value(6, char('⁶')),
-            value(7, char('⁷')),
-            value(8, char('⁸')),
-            value(9, char('⁹')),
-        )),
-    )(input)
+pub fn superscript_number_parser<'a>(input: &mut &'a str) -> PResult<u8> {
+    alt((
+        '¹'.value(1),
+        '²'.value(2),
+        '³'.value(3),
+        '⁴'.value(4),
+        '⁵'.value(5),
+        '⁶'.value(6),
+        '⁷'.value(7),
+        '⁸'.value(8),
+        '⁹'.value(9),
+    ))
+    .context(StrContext::Label("superscript_number"))
+    .parse_next(input)
 }
 
 /*
 Integer
     DigitNonZero (Digit)*
 */
-pub fn integer_parser(input: &str) -> IResult<&str, u8, VerboseError<&str>> {
-    context(
-        "integer",
-        map_res(
-            recognize(pair(digit_non_zero_parser, many0(digit_parser))),
-            |s: &str| s.parse::<u8>(),
-        ),
-    )(input)
+pub fn integer_parser<'a>(input: &mut &'a str) -> PResult<u8> {
+    (digit_non_zero_parser, repeat(0.., digit_parser))
+        .recognize()
+        .context(StrContext::Label("integer"))
+        .parse_to()
+        .parse_next(input)
 }
 
 /*
@@ -63,11 +57,10 @@ Digit
     "0"
     DigitNonZero
 */
-fn digit_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "digit",
-        alt((recognize(char('0')), recognize(digit_non_zero_parser))),
-    )(input)
+fn digit_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt(('0'.recognize(), digit_non_zero_parser.recognize()))
+        .context(StrContext::Label("digit"))
+        .parse_next(input)
 }
 
 /*
@@ -82,19 +75,9 @@ DigitNonZero
     "8"
     "9"
 */
-fn digit_non_zero_parser(input: &str) -> IResult<&str, &str, VerboseError<&str>> {
-    context(
-        "digit_non_zero",
-        recognize(alt((
-            char('1'),
-            char('2'),
-            char('3'),
-            char('4'),
-            char('5'),
-            char('6'),
-            char('7'),
-            char('8'),
-            char('9'),
-        ))),
-    )(input)
+fn digit_non_zero_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
+    alt(('1', '2', '3', '4', '5', '6', '7', '8', '9'))
+        .recognize()
+        .context(StrContext::Label("digit_non_zero"))
+        .parse_next(input)
 }

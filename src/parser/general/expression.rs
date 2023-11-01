@@ -1,14 +1,8 @@
-use nom::branch::alt;
-use nom::character::complete::char;
-use nom::combinator::{map, map_res, opt};
-use nom::error::{context, VerboseError};
-use nom::multi::separated_list1;
-use nom::sequence::{pair, separated_pair, terminated, tuple};
-use nom::IResult;
+use thiserror::Error;
+use winnow::combinator::{alt, opt, separated, separated_pair, terminated};
+use winnow::error::StrContext;
+use winnow::prelude::*;
 
-use crate::parser::utils::separated_list2;
-
-use super::super::utils::KitaError;
 use super::category::{categories_parser, Categories};
 use super::character::{integer_parser, ws_parser};
 use super::part_of_speech::{part_of_speech_tag_parser, PartOfSpeechTag};
@@ -28,14 +22,13 @@ pub enum Expression<'a> {
     UsageTagged(UsageTagged<'a>),
 }
 
-pub fn expression_parser(input: &str) -> IResult<&str, Expression, VerboseError<&str>> {
-    context(
-        "expression",
-        alt((
-            map(usages_parser, Expression::Usages),
-            map(usage_tagged_parser, Expression::UsageTagged),
-        )),
-    )(input)
+pub fn expression_parser<'a>(input: &mut &'a str) -> PResult<Expression<'a>> {
+    alt((
+        usages_parser.map(Expression::Usages),
+        usage_tagged_parser.map(Expression::UsageTagged),
+    ))
+    .context(StrContext::Label("expression"))
+    .parse_next(input)
 }
 
 /*
@@ -49,40 +42,39 @@ pub enum Usages<'a> {
     Individual(Vec<UsageItemTagged<'a>>),
 }
 
-pub fn usages_parser(input: &str) -> IResult<&str, Usages, VerboseError<&str>> {
-    context(
-        "usages",
-        alt((
-            map_res(
-                pair(tag_parser, separated_list2(ws_parser, usage_item_parser)),
-                |(tag, usage_items)| {
-                    // validate that integers are increasing with step 1
-                    let is_increasing = usage_items
-                        .iter()
-                        .enumerate()
-                        .all(|(i, val)| val.1 == i as u8 + 1);
-                    if !is_increasing {
-                        return Err(nom::Err::Error(KitaError::IncreasingUsagesList));
-                    }
-                    Ok(Usages::Common(tag, usage_items))
-                },
-            ),
-            map_res(
-                separated_list2(ws_parser, usage_item_tagged_parser),
-                |usage_items_tagged| {
-                    // validate that integers are increasing with step 1
-                    let is_increasing = usage_items_tagged
-                        .iter()
-                        .enumerate()
-                        .all(|(i, val)| val.1 == i as u8 + 1);
-                    if !is_increasing {
-                        return Err(nom::Err::Error(KitaError::IncreasingUsagesList));
-                    }
-                    Ok(Usages::Individual(usage_items_tagged))
-                },
-            ),
-        )),
-    )(input)
+#[derive(Debug, Error)]
+pub enum KitaError {
+    #[error("Usages list must be increasing")]
+    IncreasingUsagesList,
+}
+
+pub fn usages_parser<'a>(input: &mut &'a str) -> PResult<Usages<'a>> {
+    alt((
+        (tag_parser, separated(2.., usage_item_parser, ws_parser)).try_map(|(tag, usage_items)| {
+            // validate that integers are increasing with step 1
+            let is_increasing = usage_items
+                .iter()
+                .enumerate()
+                .all(|(i, val)| val.1 == i as u8 + 1);
+            if !is_increasing {
+                return Err(KitaError::IncreasingUsagesList);
+            }
+            Ok(Usages::Common(tag, usage_items))
+        }),
+        separated(2.., usage_item_tagged_parser, ws_parser).try_map(|usage_items_tagged| {
+            // validate that integers are increasing with step 1
+            let is_increasing = usage_items_tagged
+                .iter()
+                .enumerate()
+                .all(|(i, val)| val.1 == i as u8 + 1);
+            if !is_increasing {
+                return Err(KitaError::IncreasingUsagesList);
+            }
+            Ok(Usages::Individual(usage_items_tagged))
+        }),
+    ))
+    .context(StrContext::Label("usages"))
+    .parse_next(input)
 }
 
 /*
@@ -92,18 +84,15 @@ UsageItemTagged(i)
 #[derive(Debug)]
 pub struct UsageItemTagged<'a>(UsageTagged<'a>, Index);
 
-pub fn usage_item_tagged_parser(input: &str) -> IResult<&str, UsageItemTagged, VerboseError<&str>> {
-    context(
-        "usage_item_tagged",
-        map(
-            separated_pair(
-                integer_parser,
-                terminated(char('.'), ws_parser),
-                usage_tagged_parser,
-            ),
-            |(index, usage_tagged)| UsageItemTagged(usage_tagged, index),
-        ),
-    )(input)
+pub fn usage_item_tagged_parser<'a>(input: &mut &'a str) -> PResult<UsageItemTagged<'a>> {
+    separated_pair(
+        integer_parser,
+        terminated('.', ws_parser),
+        usage_tagged_parser,
+    )
+    .map(|(index, usage_tagged)| UsageItemTagged(usage_tagged, index))
+    .context(StrContext::Label("usage_item_tagged"))
+    .parse_next(input)
 }
 
 /*
@@ -113,13 +102,11 @@ UsageTagged
 #[derive(Debug)]
 pub struct UsageTagged<'a>(Tag, Usage<'a>);
 
-pub fn usage_tagged_parser(input: &str) -> IResult<&str, UsageTagged, VerboseError<&str>> {
-    context(
-        "usage_tagged",
-        map(tuple((tag_parser, usage_parser)), |(tag, usage)| {
-            UsageTagged(tag, usage)
-        }),
-    )(input)
+pub fn usage_tagged_parser<'a>(input: &mut &'a str) -> PResult<UsageTagged<'a>> {
+    (tag_parser, usage_parser)
+        .map(|(tag, usage)| UsageTagged(tag, usage))
+        .context(StrContext::Label("usage_tagged"))
+        .parse_next(input)
 }
 
 /*
@@ -133,20 +120,17 @@ pub struct Tag(
     Option<Temporality>,
 );
 
-pub fn tag_parser(input: &str) -> IResult<&str, Tag, VerboseError<&str>> {
-    context(
-        "tag",
-        map(
-            tuple((
-                opt(terminated(part_of_speech_tag_parser, ws_parser)),
-                opt(terminated(categories_parser, ws_parser)),
-                opt(terminated(temporality_parser, ws_parser)),
-            )),
-            |(part_of_speech, categories, temporality)| {
-                Tag(part_of_speech, categories, temporality)
-            },
-        ),
-    )(input)
+pub fn tag_parser<'a>(input: &mut &'a str) -> PResult<Tag> {
+    (
+        opt(terminated(part_of_speech_tag_parser, ws_parser)),
+        opt(terminated(categories_parser, ws_parser)),
+        opt(terminated(temporality_parser, ws_parser)),
+    )
+        .map(|(part_of_speech, categories, temporality)| {
+            Tag(part_of_speech, categories, temporality)
+        })
+        .context(StrContext::Label("tag"))
+        .parse_next(input)
 }
 
 /*
@@ -156,18 +140,11 @@ UsageItem(i)
 #[derive(Debug)]
 pub struct UsageItem<'a>(Usage<'a>, Index);
 
-pub fn usage_item_parser(input: &str) -> IResult<&str, UsageItem, VerboseError<&str>> {
-    context(
-        "usage_item",
-        map(
-            separated_pair(
-                integer_parser,
-                terminated(char('.'), ws_parser),
-                usage_parser,
-            ),
-            |(index, usage)| UsageItem(usage, index),
-        ),
-    )(input)
+pub fn usage_item_parser<'a>(input: &mut &'a str) -> PResult<UsageItem<'a>> {
+    separated_pair(integer_parser, terminated('.', ws_parser), usage_parser)
+        .map(|(index, usage)| UsageItem(usage, index))
+        .context(StrContext::Label("usage_item"))
+        .parse_next(input)
 }
 
 /*
@@ -179,14 +156,11 @@ Usage
 #[derive(Debug)]
 pub struct Usage<'a>(Vec<Definition<'a>>);
 
-pub fn usage_parser(input: &str) -> IResult<&str, Usage, VerboseError<&str>> {
-    context(
-        "usage",
-        map(
-            separated_list1(terminated(char(';'), ws_parser), definition_parser),
-            Usage,
-        ),
-    )(input)
+pub fn usage_parser<'a>(input: &mut &'a str) -> PResult<Usage<'a>> {
+    separated(1.., definition_parser, terminated(';', ws_parser))
+        .map(Usage)
+        .context(StrContext::Label("usage"))
+        .parse_next(input)
 }
 
 /*
@@ -200,12 +174,11 @@ pub enum Definition<'a> {
     SentenceDe(&'a str),
 }
 
-pub fn definition_parser(input: &str) -> IResult<&str, Definition, VerboseError<&str>> {
-    context(
-        "definition",
-        alt((
-            map(reference_parser, Definition::Reference),
-            map(sentence_de_parser, Definition::SentenceDe),
-        )),
-    )(input)
+pub fn definition_parser<'a>(input: &mut &'a str) -> PResult<Definition<'a>> {
+    alt((
+        reference_parser.map(Definition::Reference),
+        sentence_de_parser.map(Definition::SentenceDe),
+    ))
+    .context(StrContext::Label("definition"))
+    .parse_next(input)
 }

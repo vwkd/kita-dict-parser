@@ -1,13 +1,6 @@
-use nom::{
-    branch::alt,
-    bytes::complete::tag,
-    character::complete::char,
-    combinator::{map, value},
-    error::{context, VerboseError},
-    multi::separated_list1,
-    sequence::{delimited, terminated},
-    IResult,
-};
+use winnow::combinator::{alt, delimited, separated, terminated};
+use winnow::error::StrContext;
+use winnow::prelude::*;
 
 use super::character::ws_parser;
 
@@ -18,18 +11,15 @@ Categories
 #[derive(Debug)]
 pub struct Categories(Vec<Category>);
 
-pub fn categories_parser(input: &str) -> IResult<&str, Categories, VerboseError<&str>> {
-    context(
-        "categories",
-        map(
-            delimited(
-                char('('),
-                separated_list1(terminated(char(','), ws_parser), category_parser),
-                char(')'),
-            ),
-            Categories,
-        ),
-    )(input)
+pub fn categories_parser<'a>(input: &mut &'a str) -> PResult<Categories> {
+    delimited(
+        '(',
+        separated(1.., category_parser, terminated(',', ws_parser)),
+        ')',
+    )
+    .map(Categories)
+    .context(StrContext::Label("categories"))
+    .parse_next(input)
 }
 
 /*
@@ -165,82 +155,81 @@ pub enum Category {
     ZO,
 }
 
-pub fn category_parser(input: &str) -> IResult<&str, Category, VerboseError<&str>> {
-    context(
-        "category",
-        terminated(
+pub fn category_parser<'a>(input: &mut &'a str) -> PResult<Category> {
+    terminated(
+        alt((
             alt((
-                alt((
-                    value(Category::AN, tag("an")),
-                    value(Category::ARCH, tag("arch")),
-                    value(Category::ATSCH, tag("atsch")),
-                    value(Category::BIOL, tag("biol")),
-                    value(Category::BOT, tag("bot")),
-                    value(Category::CHEM, tag("chem")),
-                    // todo: remove, fix print error in source
-                    value(Category::CHEW, alt((tag("chews"), tag("chew")))),
-                    value(Category::DESP, tag("desp")),
-                    value(Category::DSCHAW, tag("dschaw")),
-                    value(Category::ELEKTR, tag("elektr")),
-                    value(Category::ETHN, tag("ethn")),
-                    value(Category::EUPH, tag("euph")),
-                    value(Category::FAM, tag("fam")),
-                    value(Category::GEOL, tag("geol")),
-                    value(Category::GR, tag("gr")),
-                    value(Category::GUD, tag("gud")),
-                    value(Category::GUR, tag("gur")),
-                    value(Category::HIST, tag("hist")),
-                    value(Category::IMER, tag("imer")),
-                    value(Category::ING, tag("ing")),
-                )),
-                alt((
-                    value(Category::IRO, tag("iro")),
-                    value(Category::JUR, tag("jur")),
-                    value(Category::KACH, tag("kach")),
-                    value(Category::KHAR, tag("khar")),
-                    value(Category::KHIS, tag("khis")),
-                    value(Category::KIND, tag("Kind")),
-                    value(Category::KOLL, tag("koll")),
-                    value(Category::LANDW, tag("landw")),
-                    value(Category::LETSCH, tag("letsch")),
-                    value(Category::MATH, tag("math")),
-                    value(Category::MED, tag("med")),
-                    value(Category::MIL, tag("mil")),
-                    value(Category::MIN, tag("min")),
-                    value(Category::MINGR, tag("mingr")),
-                    value(Category::MOCH, tag("moch")),
-                    value(Category::MORAL, tag("moral")),
-                    value(Category::MTHIUL, tag("mthiul")),
-                    value(Category::MUS, tag("mus")),
-                    value(Category::MYTH, tag("myth")),
-                    value(Category::NZ, tag("nz")),
-                    value(Category::OIMER, tag("o-imer")),
-                )),
-                alt((
-                    value(Category::ORATSCH, tag("o-ratsch")),
-                    value(Category::PHOTOGR, tag("photogr")),
-                    value(Category::PHYS, tag("phys")),
-                    value(Category::POET, tag("poet")),
-                    value(Category::POL, tag("pol")),
-                    value(Category::PSCH, tag("psch")),
-                    value(Category::RATSCH, tag("ratsch")),
-                    value(Category::RL, tag("rl")),
-                    value(Category::SPO, tag("spo")),
-                    value(Category::TECH, tag("tech")),
-                    value(Category::THIAN, tag("thian")),
-                    value(Category::THUSCH, tag("thusch")),
-                    value(Category::TSCHAN, tag("tschan")),
-                    value(Category::TYP, tag("typ")),
-                    value(Category::UIMER, tag("u-imer")),
-                    value(Category::UMG, tag("umg")),
-                    value(Category::UNK, tag("unk")),
-                    value(Category::URATSCH, tag("u-ratsch")),
-                    value(Category::VR, tag("vr")),
-                    value(Category::VULG, tag("vulg")),
-                    value(Category::ZO, tag("zo")),
-                )),
+                "an".value(Category::AN),
+                "arch".value(Category::ARCH),
+                "atsch".value(Category::ATSCH),
+                "biol".value(Category::BIOL),
+                "bot".value(Category::BOT),
+                "chem".value(Category::CHEM),
+                // todo: remove, fix print error in source
+                alt(("chews", "chew")).value(Category::CHEW),
+                "desp".value(Category::DESP),
+                "dschaw".value(Category::DSCHAW),
+                "elektr".value(Category::ELEKTR),
+                "ethn".value(Category::ETHN),
+                "euph".value(Category::EUPH),
+                "fam".value(Category::FAM),
+                "geol".value(Category::GEOL),
+                "gr".value(Category::GR),
+                "gud".value(Category::GUD),
+                "gur".value(Category::GUR),
+                "hist".value(Category::HIST),
+                "imer".value(Category::IMER),
+                "ing".value(Category::ING),
             )),
-            char('.'),
-        ),
-    )(input)
+            alt((
+                "iro".value(Category::IRO),
+                "jur".value(Category::JUR),
+                "kach".value(Category::KACH),
+                "khar".value(Category::KHAR),
+                "khis".value(Category::KHIS),
+                "Kind".value(Category::KIND),
+                "koll".value(Category::KOLL),
+                "landw".value(Category::LANDW),
+                "letsch".value(Category::LETSCH),
+                "math".value(Category::MATH),
+                "med".value(Category::MED),
+                "mil".value(Category::MIL),
+                "min".value(Category::MIN),
+                "mingr".value(Category::MINGR),
+                "moch".value(Category::MOCH),
+                "moral".value(Category::MORAL),
+                "mthiul".value(Category::MTHIUL),
+                "mus".value(Category::MUS),
+                "myth".value(Category::MYTH),
+                "nz".value(Category::NZ),
+                "o-imer".value(Category::OIMER),
+            )),
+            alt((
+                "o-ratsch".value(Category::ORATSCH),
+                "photogr".value(Category::PHOTOGR),
+                "phys".value(Category::PHYS),
+                "poet".value(Category::POET),
+                "pol".value(Category::POL),
+                "psch".value(Category::PSCH),
+                "ratsch".value(Category::RATSCH),
+                "rl".value(Category::RL),
+                "spo".value(Category::SPO),
+                "tech".value(Category::TECH),
+                "thian".value(Category::THIAN),
+                "thusch".value(Category::THUSCH),
+                "tschan".value(Category::TSCHAN),
+                "typ".value(Category::TYP),
+                "u-imer".value(Category::UIMER),
+                "umg".value(Category::UMG),
+                "unk".value(Category::UNK),
+                "u-ratsch".value(Category::URATSCH),
+                "vr".value(Category::VR),
+                "vulg".value(Category::VULG),
+                "zo".value(Category::ZO),
+            )),
+        )),
+        '.',
+    )
+    .context(StrContext::Label("category"))
+    .parse_next(input)
 }
