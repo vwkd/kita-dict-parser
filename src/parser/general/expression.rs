@@ -50,18 +50,27 @@ pub enum KitaError {
 
 pub fn usages_parser<'a>(input: &mut &'a str) -> PResult<Usages<'a>> {
     alt((
-        (tag_parser, separated(2.., usage_item_parser, ws_parser)).try_map(|(tag, usage_items)| {
-            // validate that integers are increasing with step 1
-            let is_increasing = usage_items
-                .iter()
-                .enumerate()
-                .all(|(i, val)| val.1 == i as u8 + 1);
-            if !is_increasing {
-                return Err(KitaError::IncreasingUsagesList);
-            }
-            Ok(Usages::Common(tag, usage_items))
-        }),
-        separated(2.., usage_item_tagged_parser, ws_parser).try_map(|usage_items_tagged| {
+        (
+            tag_parser,
+            separated::<_, _, Vec<UsageItem>, _, _, _, _>(2.., usage_item_parser, ws_parser),
+        )
+            .try_map(|(tag, usage_items)| {
+                // validate that integers are increasing with step 1
+                let is_increasing = usage_items
+                    .iter()
+                    .enumerate()
+                    .all(|(i, val)| val.1 == i as u8 + 1);
+                if !is_increasing {
+                    return Err(KitaError::IncreasingUsagesList);
+                }
+                Ok(Usages::Common(tag, usage_items))
+            }),
+        separated::<_, _, Vec<UsageItemTagged>, _, _, _, _>(
+            2..,
+            usage_item_tagged_parser,
+            ws_parser,
+        )
+        .try_map(|usage_items_tagged| {
             // validate that integers are increasing with step 1
             let is_increasing = usage_items_tagged
                 .iter()

@@ -45,7 +45,10 @@ Integer
     DigitNonZero (Digit)*
 */
 pub fn integer_parser<'a>(input: &mut &'a str) -> PResult<u8> {
-    (digit_non_zero_parser, repeat(0.., digit_parser))
+    (
+        digit_non_zero_parser,
+        repeat::<_, _, (), _, _>(0.., digit_parser),
+    )
         .recognize()
         .context(StrContext::Label("integer"))
         .parse_to()

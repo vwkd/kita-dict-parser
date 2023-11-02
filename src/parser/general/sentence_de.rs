@@ -15,7 +15,7 @@ SentenceDe
   SentenceDePart (SentenceDeSeparator SentenceDePart)*
 */
 pub fn sentence_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
-    separated(1.., sentence_de_part_parser, sentence_de_separator_parser)
+    separated::<_, _, (), _, _, _, _>(1.., sentence_de_part_parser, sentence_de_separator_parser)
         .recognize()
         .context(StrContext::Label("sentence_de"))
         .parse_next(input)
@@ -56,7 +56,7 @@ WordsDeParentheses
   WordDe (WordDeParenthesesSeparator WordDe)*
 */
 pub fn words_de_parentheses_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
-    separated(1.., word_de_parser, word_de_parentheses_separator_parser)
+    separated::<_, _, (), _, _, _, _>(1.., word_de_parser, word_de_parentheses_separator_parser)
         .recognize()
         .context(StrContext::Label("words_de_parentheses"))
         .parse_next(input)
@@ -85,7 +85,7 @@ WordsDe
   WordDe (WordDeSeparator WordDe)*
 */
 pub fn words_de_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
-    separated(1.., word_de_parser, word_de_separator_parser)
+    separated::<_, _, (), _, _, _, _>(1.., word_de_parser, word_de_separator_parser)
         .recognize()
         .context(StrContext::Label("words_de"))
         .parse_next(input)
