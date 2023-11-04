@@ -1,6 +1,7 @@
 mod import;
 mod parser;
 
+use colored::Colorize;
 use import::{load_dict, Entry};
 use parser::{general, verb};
 
@@ -19,11 +20,17 @@ fn main() {
                 // let parsed_entry = verb::parse(line);
                 // println!("{:?}\n", parsed_entry);
             }
-            Entry::Other(line) => {
-                println!("{index}: {line}");
-                let parsed_entry = general::parse(line);
-                println!("{:?}\n", parsed_entry);
-            }
+            Entry::Other(line) => match general::parse(line) {
+                Ok(general::Entry(
+                    general::term::Term(term),
+                    general::expression::Expression(expr),
+                )) => {
+                    println!("{}: {: <30} {}", index.to_string().green(), term, expr);
+                }
+                Err(err) => {
+                    println!("{}: {}", index.to_string().red(), err.bold());
+                }
+            },
         }
     }
 }

@@ -35,7 +35,7 @@ Entry
   Term Expression
 */
 #[derive(Debug)]
-pub struct Entry<'a>(Term<'a>, Expression<'a>);
+pub struct Entry<'a>(pub Term<'a>, pub Expression<'a>);
 
 pub fn entry_parser<'a>(input: &mut &'a str) -> PResult<Entry<'a>> {
     (term_parser, expression_parser)
