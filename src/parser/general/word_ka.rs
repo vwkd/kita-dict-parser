@@ -17,7 +17,7 @@ pub fn word_ka_small_parser<'a>(input: &mut &'a str) -> PResult<&'a str> {
 CharKaSmall
     UNICODE_GEORGIAN_CHARACTER
 */
-fn is_char_ka(c: char) -> bool {
+pub fn is_char_ka(c: char) -> bool {
     match c {
         'ა'..='ჰ' => true,
         _ => false,

@@ -1,5 +1,5 @@
 use thiserror::Error;
-use winnow::combinator::{alt, opt, separated, separated_pair, terminated};
+use winnow::combinator::{alt, opt, rest, separated, separated_pair, terminated};
 use winnow::error::StrContext;
 use winnow::prelude::*;
 
@@ -17,18 +17,12 @@ Expression
     UsageTagged
 */
 #[derive(Debug)]
-pub enum Expression<'a> {
-    Usages(Usages<'a>),
-    UsageTagged(UsageTagged<'a>),
-}
+pub struct Expression<'a>(pub &'a str);
 
 pub fn expression_parser<'a>(input: &mut &'a str) -> PResult<Expression<'a>> {
-    alt((
-        usages_parser.map(Expression::Usages),
-        usage_tagged_parser.map(Expression::UsageTagged),
-    ))
-    .context(StrContext::Label("expression"))
-    .parse_next(input)
+    rest.map(Expression)
+        .context(StrContext::Label("expression"))
+        .parse_next(input)
 }
 
 /*

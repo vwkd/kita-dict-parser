@@ -10,7 +10,7 @@ pub mod term;
 pub mod word_de;
 pub mod word_ka;
 
-use winnow::combinator::separated_pair;
+use winnow::combinator::{rest, separated_pair, terminated};
 use winnow::error::StrContext;
 use winnow::prelude::*;
 
@@ -32,13 +32,13 @@ pub fn parse(input: &mut str) -> Result<Entry, String> {
 
 /*
 Entry
-  Term ws Expression
+  Term Expression
 */
 #[derive(Debug)]
 pub struct Entry<'a>(Term<'a>, Expression<'a>);
 
 pub fn entry_parser<'a>(input: &mut &'a str) -> PResult<Entry<'a>> {
-    separated_pair(term_parser, ws_parser, expression_parser)
+    (term_parser, expression_parser)
         .map(|(t, e)| Entry(t, e))
         .context(StrContext::Label("entry"))
         .parse_next(input)
